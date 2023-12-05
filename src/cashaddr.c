@@ -81,7 +81,7 @@ static int convert_bits(uint8_t *out, size_t *outlen, int outbits,
 
 void create_checksum(uint8_t *payload, size_t payload_length,
                      uint8_t *checksum) {
-    uint8_t *prefix = (uint8_t *)"bitcoincash";
+    uint8_t *prefix = (uint8_t *)"nexa";
     uint64_t mod = PolyMod(prefix, payload, payload_length);
 
     for (size_t i = 0; i < 8; ++i) {
@@ -112,6 +112,10 @@ int cashaddr_encode(uint8_t *hash, const size_t hash_length, uint8_t *addr,
         version_byte = 0;
     } else if (version == CASHADDR_P2SH) {
         version_byte = 8;
+    }
+    else if (version == CASHADDR_P2ST) {
+        version_byte = 19;
+        version_byte << 3;
     } else {
         return 0;
     }

@@ -33,8 +33,8 @@ unsigned short btchip_apdu_get_coin_version() {
 
     G_io_apdu_buffer[offset++] = G_coin_config->p2pkh_version >> 8;
     G_io_apdu_buffer[offset++] = G_coin_config->p2pkh_version;
-    G_io_apdu_buffer[offset++] = G_coin_config->p2sh_version >> 8;
-    G_io_apdu_buffer[offset++] = G_coin_config->p2sh_version;
+    G_io_apdu_buffer[offset++] = G_coin_config->p2st_version >> 8;
+    G_io_apdu_buffer[offset++] = G_coin_config->p2st_version;
     G_io_apdu_buffer[offset++] = G_coin_config->family;
     G_io_apdu_buffer[offset++] = strlen(G_coin_config->coinid);
     memmove(G_io_apdu_buffer + offset, G_coin_config->coinid,

@@ -94,7 +94,7 @@ unsigned short btchip_apdu_sign_message_internal() {
             btchip_context_D.transactionSummary.payToAddressVersion =
                 G_coin_config->p2pkh_version;
             btchip_context_D.transactionSummary.payToScriptHashVersion =
-                G_coin_config->p2sh_version;
+                G_coin_config->p2st_version;
             memmove(
                     btchip_context_D.transactionSummary.keyPath,
                     G_io_apdu_buffer + offset, MAX_BIP32_PATH_LENGTH);

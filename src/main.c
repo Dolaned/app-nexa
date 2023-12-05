@@ -226,7 +226,7 @@ void get_address_from_output_script(unsigned char* script, int script_size, char
     unsigned char address[22];
     unsigned short textSize;
     int addressOffset = 3;
-    unsigned short version = G_coin_config->p2sh_version;
+    unsigned short version = G_coin_config->p2st_version;
 
     if (btchip_output_script_is_regular(script)) {
         addressOffset = 4;
@@ -247,7 +247,7 @@ void get_address_from_output_script(unsigned char* script, int script_size, char
     if (btchip_context_D.usingCashAddr) {
         cashaddr_encode(
             address + versionSize, 20, (uint8_t *)out, out_size,
-            (version == G_coin_config->p2sh_version
+            (version == G_coin_config->p2st_version
                     ? CASHADDR_P2SH
                     : CASHADDR_P2PKH));
     } else {
@@ -512,7 +512,7 @@ void init_coin_config(btchip_altcoin_config_t *coin_config) {
     coin_config->bip44_coin_type = BIP44_COIN_TYPE;
     coin_config->bip44_coin_type2 = BIP44_COIN_TYPE_2;
     coin_config->p2pkh_version = COIN_P2PKH_VERSION;
-    coin_config->p2sh_version = COIN_P2SH_VERSION;
+    coin_config->p2st_version = COIN_P2ST_VERSION;
     coin_config->family = COIN_FAMILY;
     strcpy(coin_config->coinid, COIN_COINID);
     strcpy(coin_config->name, COIN_COINID_NAME);

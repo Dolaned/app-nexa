@@ -27,6 +27,7 @@
 
 #define CASHADDR_P2PKH 0
 #define CASHADDR_P2SH 1
+#define CASHADDR_P2ST 2
 
 /** Encode a Bitcoin Cash address
  *

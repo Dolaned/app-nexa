@@ -288,14 +288,15 @@ typedef enum btchip_coin_kind_e {
     COIN_KIND_LBRY,
     COIN_KIND_RESISTANCE,
     COIN_KIND_RAVENCOIN,
-    COIN_KIND_HYDRA
+    COIN_KIND_HYDRA,
+    COIN_KIND_NEXA
 } btchip_coin_kind_t;
 
 typedef struct btchip_altcoin_config_s {
     unsigned short bip44_coin_type;
     unsigned short bip44_coin_type2;
     unsigned short p2pkh_version;
-    unsigned short p2sh_version;
+    unsigned short p2st_version;
     unsigned char family;
 #ifdef HAVE_NBGL
     unsigned char img_raw[1024]; 

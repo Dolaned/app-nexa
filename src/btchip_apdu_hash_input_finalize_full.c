@@ -462,7 +462,7 @@ return_OK:
         transactionSummary->payToAddressVersion =
             G_coin_config->p2pkh_version;
         transactionSummary->payToScriptHashVersion =
-            G_coin_config->p2sh_version;
+            G_coin_config->p2st_version;
 
         // Generate new nonce
 

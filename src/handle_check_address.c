@@ -109,7 +109,7 @@ int handle_check_address(check_address_parameters_t* params, btchip_altcoin_conf
         params->address_parameters[0],
         compressed_public_key,
         coin_config->p2pkh_version,
-        coin_config->p2sh_version,
+        coin_config->p2st_version,
         coin_config->native_segwit_prefix,
         address,
         sizeof(address))) {

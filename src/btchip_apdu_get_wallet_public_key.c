@@ -153,7 +153,7 @@ unsigned short btchip_apdu_get_wallet_public_key() {
                 22,                    // INLEN
                 G_io_apdu_buffer + 67, // OUT
                 150,                   // MAXOUTLEN
-                G_coin_config->p2sh_version, 0);
+                G_coin_config->p2st_version, 0);
         } else {
             if (G_coin_config->native_segwit_prefix) {
                 keyLength = segwit_addr_encode(
