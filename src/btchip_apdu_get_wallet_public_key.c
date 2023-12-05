@@ -124,47 +124,14 @@ unsigned short btchip_apdu_get_wallet_public_key() {
     if (keyLength == 0) {
         return BTCHIP_SW_TECHNICAL_PROBLEM;
     }
+    // Cashaddr
+    uint8_t tmp[20];
+    btchip_public_key_hash160(G_io_apdu_buffer + 1, // IN
+                                keyLength,            // INLEN
+                                tmp);
+    keyLength =
+        cashaddr_encode(tmp, 20, G_io_apdu_buffer + 67, 50, CASHADDR_P2ST);
 
-    if (cashAddr) {
-        uint8_t tmp[20];
-        btchip_public_key_hash160(G_io_apdu_buffer + 1, // IN
-                                  keyLength,            // INLEN
-                                  tmp);
-        keyLength =
-            cashaddr_encode(tmp, 20, G_io_apdu_buffer + 67, 50, CASHADDR_P2PKH);
-    } else if (!(segwit || nativeSegwit)) {
-        keyLength = btchip_public_key_to_encoded_base58(
-            G_io_apdu_buffer + 1,  // IN
-            keyLength,             // INLEN
-            G_io_apdu_buffer + 67, // OUT
-            150,                   // MAXOUTLEN
-            G_coin_config->p2pkh_version, 0);
-    } else {
-        uint8_t tmp[22];
-        tmp[0] = 0x00;
-        tmp[1] = 0x14;
-        btchip_public_key_hash160(G_io_apdu_buffer + 1, // IN
-                                  keyLength,            // INLEN
-                                  tmp + 2               // OUT
-                                  );
-        if (!nativeSegwit) {
-            keyLength = btchip_public_key_to_encoded_base58(
-                tmp,                   // IN
-                22,                    // INLEN
-                G_io_apdu_buffer + 67, // OUT
-                150,                   // MAXOUTLEN
-                G_coin_config->p2st_version, 0);
-        } else {
-            if (G_coin_config->native_segwit_prefix) {
-                keyLength = segwit_addr_encode(
-                    (char *)(G_io_apdu_buffer + 67),
-                    (char *)PIC(G_coin_config->native_segwit_prefix), 0, tmp + 2, 20);
-                if (keyLength == 1) {
-                    keyLength = strlen((char *)(G_io_apdu_buffer + 67));
-                }
-            }
-        }
-    }
     G_io_apdu_buffer[66] = keyLength;
     PRINTF("Length %d\n", keyLength);
     if (!uncompressedPublicKeys) {

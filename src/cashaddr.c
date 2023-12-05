@@ -115,7 +115,7 @@ int cashaddr_encode(uint8_t *hash, const size_t hash_length, uint8_t *addr,
     }
     else if (version == CASHADDR_P2ST) {
         version_byte = 19;
-        version_byte << 3;
+        version_byte = version_byte << 3;
     } else {
         return 0;
     }
