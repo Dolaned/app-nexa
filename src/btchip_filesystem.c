@@ -19,11 +19,11 @@
 
 #include "btchip_public_ram_variables.h"
 
-void btchip_set_operation_mode(unsigned char operationMode) {
+void btchip_set_operation_mode(unsigned char operationMode)
+{
     secu8 opMode;
     SB_SET(opMode, operationMode);
 
     // only modify operation mode
-    nvm_write((void *)&N_btchip.bkp.config.operationMode, &opMode,
-              sizeof(opMode));
+    nvm_write((void *)&N_btchip.bkp.config.operationMode, &opMode, sizeof(opMode));
 }

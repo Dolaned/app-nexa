@@ -53,42 +53,16 @@ unsigned short btchip_apdu_hash_sign() {
     // Check state
     btchip_set_check_internal_structure_integrity(0);
 
-    // Zcash special - store parameters for later
-
-    if ((btchip_context_D.usingOverwinter) &&
-            (!btchip_context_D.overwinterSignReady) &&
-            (btchip_context_D.segwitParsedOnce) &&
-            (btchip_context_D.transactionContext.transactionState == BTCHIP_TRANSACTION_NONE)) {
-        unsigned long int expiryHeight;
-        parameters += (4 * G_io_apdu_buffer[ISO_OFFSET_CDATA]) + 1;
-        authorizationLength = *(parameters++);
-        parameters += authorizationLength;
-        lockTime = btchip_read_u32(parameters, 1, 0);
-        parameters += 4;
-        sighashType = *(parameters++);
-        expiryHeight = btchip_read_u32(parameters, 1, 0);
-        btchip_write_u32_le(btchip_context_D.nLockTime, lockTime);
-        btchip_write_u32_le(btchip_context_D.sigHashType, sighashType);
-        btchip_write_u32_le(btchip_context_D.nExpiryHeight, expiryHeight);
-        btchip_context_D.overwinterSignReady = 1;
-        return BTCHIP_SW_OK;
-    }
-
-    if (btchip_context_D.transactionContext.transactionState !=
-            BTCHIP_TRANSACTION_SIGN_READY) {
+    if (btchip_context_D.transactionContext.transactionState != BTCHIP_TRANSACTION_SIGN_READY)
+    {
         PRINTF("Invalid transaction state %d\n", btchip_context_D.transactionContext.transactionState);
         sw = BTCHIP_SW_CONDITIONS_OF_USE_NOT_SATISFIED;
         goto discardTransaction;
     }
 
-    if (btchip_context_D.usingOverwinter && !btchip_context_D.overwinterSignReady) {
-        PRINTF("Overwinter not ready to sign\n");
-        sw = BTCHIP_SW_CONDITIONS_OF_USE_NOT_SATISFIED;
-        goto discardTransaction;
-    }
-
     // Read parameters
-    if (G_io_apdu_buffer[ISO_OFFSET_CDATA] > MAX_BIP32_PATH) {
+    if (G_io_apdu_buffer[ISO_OFFSET_CDATA] > MAX_BIP32_PATH)
+    {
         sw = BTCHIP_SW_INCORRECT_DATA;
         goto discardTransaction;
     }
@@ -123,14 +97,12 @@ unsigned short btchip_apdu_hash_sign() {
     }
 
     // Finalize the hash
-    if (!btchip_context_D.usingOverwinter) {
-        btchip_write_u32_le(dataBuffer, lockTime);
-        btchip_write_u32_le(dataBuffer + 4, sighashType);
-        PRINTF("--- ADD TO HASH FULL:\n%.*H\n", sizeof(dataBuffer), dataBuffer);
-        if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.sha256.header, 0,
-                dataBuffer, sizeof(dataBuffer), NULL, 0)) {
-            goto discardTransaction;
-        }
+    btchip_write_u32_le(dataBuffer, lockTime);
+    btchip_write_u32_le(dataBuffer + 4, sighashType);
+    PRINTF("--- ADD TO HASH FULL:\n%.*H\n", sizeof(dataBuffer), dataBuffer);
+    if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.sha256.header, 0,
+            dataBuffer, sizeof(dataBuffer), NULL, 0)) {
+        goto discardTransaction;
     }
 
     // Check if the path needs to be enforced
@@ -166,19 +138,14 @@ unsigned short btchip_apdu_hash_sign() {
 void btchip_bagl_user_action_signtx(unsigned char confirming, unsigned char direct) {
     unsigned short sw = BTCHIP_SW_OK;
     // confirm and finish the apdu exchange //spaghetti
-    if (confirming) {
+    if (confirming)
+    {
         unsigned char hash[32];
-        if (btchip_context_D.usingOverwinter) {
-            cx_hash_no_throw(&btchip_context_D.transactionHashFull.blake2b.header, CX_LAST, hash, 0, hash, 32);
-        }
-        else {
-            cx_hash_no_throw(&btchip_context_D.transactionHashFull.sha256.header, CX_LAST,
-                hash, 0, hash, 32);
-            PRINTF("Hash1\n%.*H\n", sizeof(hash), hash);
+        cx_hash_no_throw(&btchip_context_D.transactionHashFull.sha256.header, CX_LAST, hash, 0, hash, 32);
+        PRINTF("Hash1\n%.*H\n", sizeof(hash), hash);
 
-            // Rehash
-            cx_hash_sha256(hash, sizeof(hash), hash, 32);
-        }
+        // Rehash
+        cx_hash_sha256(hash, sizeof(hash), hash, 32);
         PRINTF("Hash2\n%.*H\n", sizeof(hash), hash);
         // Sign
         size_t out_len = sizeof(G_io_apdu_buffer);
@@ -194,16 +161,18 @@ void btchip_bagl_user_action_signtx(unsigned char confirming, unsigned char dire
         G_io_apdu_buffer[btchip_context_D.outLength++] = btchip_context_D.transactionSummary.sighashType;
         ui_transaction_finish();
 
-    } else {
+    }
+    else
+    {
         sw = BTCHIP_SW_CONDITIONS_OF_USE_NOT_SATISFIED;
         btchip_context_D.outLength = 0;
     }
 
-    if (!direct) {
+    if (!direct)
+    {
         G_io_apdu_buffer[btchip_context_D.outLength++] = sw >> 8;
         G_io_apdu_buffer[btchip_context_D.outLength++] = sw;
 
         io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, btchip_context_D.outLength);
     }
 }
-

@@ -44,9 +44,6 @@ const unsigned char ZEN_TRANSACTION_OUTPUT_SCRIPT_P2SH_POST[] = {
         0xC0, 0x1F, 0x02, // ParamHeight (139200) -> hex -> endianness swapped
         0xB4};            // OP_CHECKBLOCKATHEIGHT
 
-const unsigned char TRANSACTION_OUTPUT_SCRIPT_P2WPKH_PRE[] = {0x16, 0x00, 0x14};
-const unsigned char TRANSACTION_OUTPUT_SCRIPT_P2WSH_PRE[] = {0x22, 0x00, 0x20};
-
 const unsigned char ZEN_OUTPUT_SCRIPT_PRE[] = {
     0x3F, 0x76, 0xA9,
     0x14}; // script length, OP_DUP, OP_HASH160, address length
@@ -60,80 +57,47 @@ const unsigned char ZEN_OUTPUT_SCRIPT_POST[] = {
     0xb4              // OP_CHECKBLOCKATHEIGHT
 };                    // BIP0115 Replay Protection
 
-unsigned char btchip_output_script_is_regular(unsigned char *buffer) {
-    if (G_coin_config->native_segwit_prefix) {
-        if ((memcmp(buffer, TRANSACTION_OUTPUT_SCRIPT_P2WPKH_PRE,
-                       sizeof(TRANSACTION_OUTPUT_SCRIPT_P2WPKH_PRE)) == 0) ||
-            (memcmp(buffer, TRANSACTION_OUTPUT_SCRIPT_P2WSH_PRE,
-                       sizeof(TRANSACTION_OUTPUT_SCRIPT_P2WSH_PRE)) == 0)) {
-            return 1;
-        }
+unsigned char btchip_output_script_is_regular(unsigned char *buffer)
+{
+    if ((memcmp(buffer, TRANSACTION_OUTPUT_SCRIPT_PRE, sizeof(TRANSACTION_OUTPUT_SCRIPT_PRE)) == 0) &&
+        (memcmp(buffer + sizeof(TRANSACTION_OUTPUT_SCRIPT_PRE) + 20, TRANSACTION_OUTPUT_SCRIPT_POST,
+        sizeof(TRANSACTION_OUTPUT_SCRIPT_POST)) == 0))
+    {
+        return 1;
     }
-    if (G_coin_config->kind == COIN_KIND_HORIZEN) {
-        if ((memcmp(buffer, ZEN_OUTPUT_SCRIPT_PRE,
-                       sizeof(ZEN_OUTPUT_SCRIPT_PRE)) == 0) &&
-            (memcmp(buffer + sizeof(ZEN_OUTPUT_SCRIPT_PRE) + 20,
-                       ZEN_OUTPUT_SCRIPT_POST,
-                       sizeof(ZEN_OUTPUT_SCRIPT_POST)) == 0)) {
-            return 1;
-        }
-    } else {
-        if ((memcmp(buffer, TRANSACTION_OUTPUT_SCRIPT_PRE,
-                       sizeof(TRANSACTION_OUTPUT_SCRIPT_PRE)) == 0) &&
-            (memcmp(buffer + sizeof(TRANSACTION_OUTPUT_SCRIPT_PRE) + 20,
-                       TRANSACTION_OUTPUT_SCRIPT_POST,
-                       sizeof(TRANSACTION_OUTPUT_SCRIPT_POST)) == 0)) {
+    return 0;
+}
+
+unsigned char btchip_output_script_is_p2sh(unsigned char *buffer)
+{
+    if ((memcmp(buffer, TRANSACTION_OUTPUT_SCRIPT_P2SH_PRE,
+        sizeof(TRANSACTION_OUTPUT_SCRIPT_P2SH_PRE)) == 0) &&
+        (memcmp(buffer + sizeof(TRANSACTION_OUTPUT_SCRIPT_P2SH_PRE) + 20,
+        TRANSACTION_OUTPUT_SCRIPT_P2SH_POST,
+        sizeof(TRANSACTION_OUTPUT_SCRIPT_P2SH_POST)) == 0))
+        {
             return 1;
         }
     }
     return 0;
 }
 
-unsigned char btchip_output_script_is_p2sh(unsigned char *buffer) {
-    if (G_coin_config->kind == COIN_KIND_HORIZEN) {
-        if ((memcmp(buffer, ZEN_TRANSACTION_OUTPUT_SCRIPT_P2SH_PRE,
-                       sizeof(ZEN_TRANSACTION_OUTPUT_SCRIPT_P2SH_PRE)) == 0) &&
-            (memcmp(buffer + sizeof(ZEN_TRANSACTION_OUTPUT_SCRIPT_P2SH_PRE) + 20,
-                       ZEN_TRANSACTION_OUTPUT_SCRIPT_P2SH_POST,
-                       sizeof(ZEN_TRANSACTION_OUTPUT_SCRIPT_P2SH_POST)) == 0)) {
-            return 1;
-        }
-    } else {
-        if ((memcmp(buffer, TRANSACTION_OUTPUT_SCRIPT_P2SH_PRE,
-                       sizeof(TRANSACTION_OUTPUT_SCRIPT_P2SH_PRE)) == 0) &&
-            (memcmp(buffer + sizeof(TRANSACTION_OUTPUT_SCRIPT_P2SH_PRE) + 20,
-                       TRANSACTION_OUTPUT_SCRIPT_P2SH_POST,
-                       sizeof(TRANSACTION_OUTPUT_SCRIPT_P2SH_POST)) == 0)) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-unsigned char btchip_output_script_is_native_witness(unsigned char *buffer) {
-    if (G_coin_config->native_segwit_prefix) {
-        if ((memcmp(buffer, TRANSACTION_OUTPUT_SCRIPT_P2WPKH_PRE,
-                       sizeof(TRANSACTION_OUTPUT_SCRIPT_P2WPKH_PRE)) == 0) ||
-            (memcmp(buffer, TRANSACTION_OUTPUT_SCRIPT_P2WSH_PRE,
-                       sizeof(TRANSACTION_OUTPUT_SCRIPT_P2WSH_PRE)) == 0)) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-unsigned char btchip_output_script_is_op_return(unsigned char *buffer) {
-    if (G_coin_config->kind == COIN_KIND_BITCOIN_CASH) {
+unsigned char btchip_output_script_is_op_return(unsigned char *buffer)
+{
+    if (G_coin_config->kind == COIN_KIND_BITCOIN_CASH)
+    {
         return ((buffer[1] == 0x6A) || ((buffer[1] == 0x00) && (buffer[2] == 0x6A)));
     }
-    else {
+    else
+    {
         return (buffer[1] == 0x6A);
     }
 }
 
 static unsigned char output_script_is_op_create_or_call(unsigned char *buffer,
                                                         size_t size,
-                                                        unsigned char value) {
+                                                        unsigned char value)
+{
     return (!btchip_output_script_is_regular(buffer) &&
             !btchip_output_script_is_p2sh(buffer) &&
             !btchip_output_script_is_op_return(buffer) && (buffer[0] <= 0xEA) &&
@@ -433,7 +397,7 @@ int btchip_sign_finalhash(unsigned char* path, size_t path_len, unsigned char *i
     unsigned int info = 0;
 
     io_seproxyhal_io_heartbeat();
-    
+
     bip32_path_t bip32Path;
     bip32Path.length = path[0];
 
@@ -443,13 +407,13 @@ int btchip_sign_finalhash(unsigned char* path, size_t path_len, unsigned char *i
 
     if (bip32_derive_ecdsa_sign_hash_256(
             CX_CURVE_SECP256K1,
-            bip32Path.path, 
+            bip32Path.path,
             bip32Path.length,
-            CX_LAST | (rfc6979 ? CX_RND_RFC6979 : CX_RND_TRNG), 
+            CX_LAST | (rfc6979 ? CX_RND_RFC6979 : CX_RND_TRNG),
             CX_SHA256,
-            in, 
-            inlen, 
-            out, 
+            in,
+            inlen,
+            out,
             outlen,
             &info) != CX_OK) {
         return -1;
@@ -474,11 +438,11 @@ int btchip_get_public_key(unsigned char* keyPath, size_t keyPath_len, uint8_t ra
 
     if (bip32_derive_get_pubkey_256(
         CX_CURVE_SECP256K1,
-        bip32Path.path, 
+        bip32Path.path,
         bip32Path.length,
         raw_pubkey,
         chainCode,
-        CX_SHA512) != CX_OK) 
+        CX_SHA512) != CX_OK)
     {
         return -1;
     }

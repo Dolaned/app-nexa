@@ -22,7 +22,8 @@ void btchip_autosetup(void);
 /**
  * Initialize the application context on boot
  */
-void btchip_context_init() {
+void btchip_context_init()
+{
     PRINTF("Context init\n");
     PRINTF("Backup size %d\n", sizeof(N_btchip.bkp));
     memset(&btchip_context_D, 0, sizeof(btchip_context_D));
@@ -30,25 +31,28 @@ void btchip_context_init() {
     btchip_context_D.called_from_swap = 0;
     btchip_context_D.currentOutputOffset = 0;
     btchip_context_D.outputParsingState = BTCHIP_OUTPUT_PARSING_NUMBER_OUTPUTS;
-    memset(btchip_context_D.totalOutputAmount, 0,
-              sizeof(btchip_context_D.totalOutputAmount));
+    memset(btchip_context_D.totalOutputAmount, 0 sizeof(btchip_context_D.totalOutputAmount));
     btchip_context_D.changeOutputFound = 0;
-    btchip_context_D.segwitWarningSeen = 0;
 
-    if (N_btchip.config_valid != 0x01) {
+    if (N_btchip.config_valid != 0x01)
+    {
         btchip_autosetup();
     }
 
-    if (!N_btchip.config_valid) {
+    if (!N_btchip.config_valid)
+    {
         unsigned char defaultMode;
         PRINTF("No configuration found\n");
         defaultMode = BTCHIP_MODE_SETUP_NEEDED;
 
         btchip_set_operation_mode(defaultMode);
-    } else {
+    }
+    else
+    {
         SB_CHECK(N_btchip.bkp.config.operationMode);
     }
-    if (!N_btchip.storageInitialized) {
+    if (!N_btchip.storageInitialized)
+    {
         unsigned char initialized = 1, denied=1;
 
         nvm_write((void *)&N_btchip.pubKeyRequestRestriction, &denied, 1);

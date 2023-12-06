@@ -24,7 +24,6 @@
 
 #include "btchip_bagl_extensions.h"
 
-#include "segwit_addr.h"
 #include "cashaddr.h"
 
 #include "ux.h"
@@ -138,17 +137,8 @@ uint8_t check_fee_swap() {
     if ((borrow != 0) || (memcmp(fees, vars.swap_data.fees, 8) != 0))
         return 0;
     btchip_context_D.transactionContext.firstSigned = 0;
-
-    if (btchip_context_D.usingSegwit &&  !btchip_context_D.segwitParsedOnce) {
-        // This input cannot be signed when using segwit - just restart.
-        btchip_context_D.segwitParsedOnce = 1;
-        PRINTF("Segwit parsed once\n");
-        btchip_context_D.transactionContext.transactionState =
-        BTCHIP_TRANSACTION_NONE;
-    } else {
-        btchip_context_D.transactionContext.transactionState =
-        BTCHIP_TRANSACTION_SIGN_READY;
-    }
+    btchip_context_D.transactionContext.transactionState =
+    BTCHIP_TRANSACTION_SIGN_READY;
     btchip_context_D.sw = 0x9000;
     btchip_context_D.outLength = 0;
     G_io_apdu_buffer[btchip_context_D.outLength++] = 0x90;
@@ -211,15 +201,6 @@ void get_address_from_output_script(unsigned char* script, int script_size, char
     if ((G_coin_config->kind == COIN_KIND_HYDRA) &&
         btchip_output_script_is_op_call(script, script_size)) {
         strncpy(out, "OP_CALL", out_size);
-        return;
-    }
-    if (btchip_output_script_is_native_witness(script)) {
-        if (G_coin_config->native_segwit_prefix) {
-            segwit_addr_encode(
-                out, (char *)PIC(G_coin_config->native_segwit_prefix), 0,
-                script + OUTPUT_SCRIPT_NATIVE_WITNESS_PROGRAM_OFFSET,
-                script[OUTPUT_SCRIPT_NATIVE_WITNESS_PROGRAM_OFFSET - 1]);
-        }
         return;
     }
     unsigned char versionSize;
@@ -394,20 +375,10 @@ unsigned int btchip_silent_confirm_single_output() {
         }
     }
 
-    if (btchip_context_D.outputParsingState == BTCHIP_OUTPUT_FINALIZE_TX) {
+    if (btchip_context_D.outputParsingState == BTCHIP_OUTPUT_FINALIZE_TX)
+    {
         btchip_context_D.transactionContext.firstSigned = 0;
-
-        if (btchip_context_D.usingSegwit &&
-            !btchip_context_D.segwitParsedOnce) {
-            // This input cannot be signed when using segwit - just restart.
-            btchip_context_D.segwitParsedOnce = 1;
-            PRINTF("Segwit parsed once\n");
-            btchip_context_D.transactionContext.transactionState =
-                BTCHIP_TRANSACTION_NONE;
-        } else {
-            btchip_context_D.transactionContext.transactionState =
-                BTCHIP_TRANSACTION_SIGN_READY;
-        }
+        btchip_context_D.transactionContext.transactionState = BTCHIP_TRANSACTION_SIGN_READY;
     }
     if (btchip_context_D.outputParsingState == BTCHIP_OUTPUT_FINALIZE_TX) {
         // we've finished the processing of the input
@@ -489,19 +460,17 @@ void btchip_bagl_request_sign_path_approval(unsigned char* change_path)
     ui_request_sign_path_approval_flow();
 }
 
-void btchip_bagl_request_segwit_input_approval()
+
+void app_exit(void)
 {
-    ui_request_segwit_input_approval_flow();
-}
-
-
-
-void app_exit(void) {
-    BEGIN_TRY_L(exit) {
-        TRY_L(exit) {
+    BEGIN_TRY_L(exit)
+    {
+        TRY_L(exit)
+        {
             os_sched_exit(-1);
         }
-        FINALLY_L(exit) {
+        FINALLY_L(exit)
+        {
         }
     }
     END_TRY_L(exit);
@@ -522,12 +491,6 @@ void init_coin_config(btchip_altcoin_config_t *coin_config) {
     memcpy(&coin_config->img_nbgl, &COIN_ICON, sizeof(nbgl_icon_details_t));
     coin_config->img_nbgl.bitmap = coin_config->img_raw;
 #endif // HAVE_NBGL
-#ifdef COIN_NATIVE_SEGWIT_PREFIX
-    strcpy(coin_config->native_segwit_prefix_val, COIN_NATIVE_SEGWIT_PREFIX);
-    coin_config->native_segwit_prefix = coin_config->native_segwit_prefix_val;
-#else
-    coin_config->native_segwit_prefix = 0;
-#endif // #ifdef COIN_NATIVE_SEGWIT_PREFIX
 #ifdef COIN_FORKID
     coin_config->forkid = COIN_FORKID;
 #endif // COIN_FORKID

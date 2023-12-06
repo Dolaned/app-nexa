@@ -23,9 +23,9 @@
 
 #include "btchip_bagl_extensions.h"
 
-typedef enum { 
-    MESSAGE_TYPE, 
-    TRANSACTION_TYPE 
+typedef enum {
+    MESSAGE_TYPE,
+    TRANSACTION_TYPE
 } flow_type_t;
 
 enum {
@@ -138,7 +138,7 @@ static void status_callback(bool confirm) {
 // Prompt Cancel
 static void prompt_cancel(flow_type_t type) {
   switch (type) {
-      case MESSAGE_TYPE: 
+      case MESSAGE_TYPE:
           nbgl_useCaseConfirm("Reject message", NULL, "Yes, Reject",
                   "Go back to message", abandon_status);
           break;
@@ -150,8 +150,8 @@ static void prompt_cancel(flow_type_t type) {
   }
 }
 
-static void prompt_cancel_message(void) { 
-    prompt_cancel(MESSAGE_TYPE); 
+static void prompt_cancel_message(void) {
+    prompt_cancel(MESSAGE_TYPE);
 }
 
 static void prompt_cancel_transaction(void) {
@@ -232,7 +232,7 @@ static void continue_review(flow_type_t type) {
   uiContext.infoLongPress.text = uiContext.prompt;
 
   switch (type) {
-      case MESSAGE_TYPE: 
+      case MESSAGE_TYPE:
           nbgl_useCaseStaticReview(&uiContext.tagValueList, &uiContext.infoLongPress,
                   "Cancel", message_review_callback);
           break;
@@ -251,7 +251,7 @@ static void continue_message_review(void) {
 // UI Start
 static void ui_start(void (*cb)(void), flow_type_t type) {
   switch (type) {
-      case MESSAGE_TYPE: 
+      case MESSAGE_TYPE:
           nbgl_useCaseReviewStart(&G_coin_config->img_nbgl, "Review\nmessage", NULL,
                   "Cancel", continue_message_review,
                   prompt_cancel_message);
@@ -389,22 +389,6 @@ void ui_request_change_path_approval_flow(void) {
     nbgl_useCaseChoice(&C_round_warning_64px, "Unusual\nchange path",
                        vars.tmp_warning.derivation_path, "Continue",
                        "Reject if not sure", transaction_review_callback);
-  }
-}
-
-void ui_request_segwit_input_approval_flow(void) {
-  uiContext.approved_cb = approved_user_action_processing_callback;
-  uiContext.abandon_cb = abandon_user_action_display_callback;
-
-  if (!uiContext.transaction_prompt_done) {
-    uiContext.transaction_prompt_done = true;
-
-    ui_transaction_start(ui_request_segwit_input_approval_flow);
-  } else {
-    nbgl_useCaseChoice(&C_round_warning_64px, "Unverified inputs",
-                       "Update Ledger Live\nor third party software",
-                       "Continue", "Reject if not sure",
-                       transaction_review_callback);
   }
 }
 

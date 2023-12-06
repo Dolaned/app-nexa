@@ -429,25 +429,6 @@ UX_FLOW(ux_request_sign_path_approval_flow,
         &ux_request_sign_path_approval_flow_4_step);
 
 //////////////////////////////////////////////////////////////////////
-UX_STEP_NOCB(ux_request_segwit_input_approval_flow_1_step, pb,
-             {.icon = &C_icon_warning, .line1 = "Unverified inputs"});
-UX_STEP_NOCB(ux_request_segwit_input_approval_flow_2_step, nn,
-             {.line1 = "Update", .line2 = " Ledger Live"});
-UX_STEP_NOCB(ux_request_segwit_input_approval_flow_3_step, nn,
-             {.line1 = "or third party", .line2 = "wallet software"});
-UX_STEP_CB(ux_request_segwit_input_approval_flow_4_step, pb,
-           io_seproxyhal_touch_display_cancel(NULL),
-           {.icon = &C_icon_crossmark, .line1 = "Cancel"});
-UX_STEP_CB(ux_request_segwit_input_approval_flow_5_step, pb,
-           io_seproxyhal_touch_display_ok(NULL),
-           {&C_icon_validate_14, "Continue"});
-
-UX_FLOW(ux_request_segwit_input_approval_flow,
-        &ux_request_segwit_input_approval_flow_1_step,
-        &ux_request_segwit_input_approval_flow_2_step,
-        &ux_request_segwit_input_approval_flow_3_step,
-        &ux_request_segwit_input_approval_flow_4_step,
-        &ux_request_segwit_input_approval_flow_5_step);
 
 void ui_sign_message_flow(void) { ux_flow_init(0, ux_sign_flow, NULL); }
 
@@ -484,16 +465,12 @@ void ui_request_sign_path_approval_flow(void) {
   ux_flow_init(0, ux_request_sign_path_approval_flow, NULL);
 }
 
-void ui_request_segwit_input_approval_flow(void) {
-  ux_flow_init(0, ux_request_segwit_input_approval_flow, NULL);
-}
-
 void ui_idle_flow(void) {
   if (G_ux.stack_count == 0) {
     ux_stack_push();
   }
   ux_flow_init(0, ux_idle_flow, NULL);
-} 
+}
 
 void ui_transaction_error(void) {
 }

@@ -98,19 +98,11 @@ enum btchip_output_parsing_state_e {
 typedef enum btchip_output_parsing_state_e btchip_output_parsing_state_t;
 
 
-typedef union multi_hash {
+typedef union multi_hash
+{
     cx_sha256_t sha256;
     cx_blake2b_t blake2b;
 } multi_hash;
-
-struct segwit_hash_s {
-    union multi_hash hashPrevouts;
-};
-struct segwit_cache_s {
-    unsigned char hashedPrevouts[32];
-    unsigned char hashedSequence[32];
-    unsigned char hashedOutputs[32];
-};
 
 /**
  * Structure defining an operation on a transaction
@@ -176,19 +168,9 @@ struct btchip_context_s {
     /** Current hash to perform (TRANSACTION_HASH_) */
     unsigned char transactionHashOption;
 
-    /* Segregated Witness changes */
-
-    union {
-        struct segwit_hash_s hash;
-        struct segwit_cache_s cache;
-    } segwit;
     unsigned char transactionVersion[4];
     unsigned char inputValue[8];
-    unsigned char usingSegwit;
     unsigned char usingCashAddr;
-    unsigned char segwitParsedOnce;
-    /** Prevents display of segwit input warning at each InputHashStart APDU */
-    unsigned char segwitWarningSeen;
 
     /* /Segregated Witness changes */
 
@@ -255,7 +237,6 @@ typedef struct btchip_context_s btchip_context_t;
 typedef enum btchip_coin_flags_e {
     FLAG_PEERCOIN_UNITS=1,
     FLAG_PEERCOIN_SUPPORT=2,
-    FLAG_SEGWIT_CHANGE_SUPPORT=4
 } btchip_coin_flags_t;
 
 
@@ -299,14 +280,12 @@ typedef struct btchip_altcoin_config_s {
     unsigned short p2st_version;
     unsigned char family;
 #ifdef HAVE_NBGL
-    unsigned char img_raw[1024]; 
+    unsigned char img_raw[1024];
     nbgl_icon_details_t img_nbgl;
 #endif // HAVE_NBGL
     char coinid[14]; // used coind id for message signature prefix
     char name[16]; // for ux displays
     char name_short[6]; // for unit in ux displays
-    char native_segwit_prefix_val[5];
-    const char* native_segwit_prefix; // null if no segwit prefix
     unsigned int forkid;
     unsigned int zcash_consensus_branch_id;
     btchip_coin_kind_t kind;

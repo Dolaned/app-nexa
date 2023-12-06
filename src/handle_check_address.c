@@ -5,7 +5,6 @@
 #include "btchip_ecc.h"
 #include "btchip_apdu_get_wallet_public_key.h"
 #include "cashaddr.h"
-#include "segwit_addr.h"
 #include <string.h>
 
 bool derive_compressed_public_key(
@@ -28,12 +27,11 @@ bool get_address_from_compressed_public_key(
     unsigned char* compressed_pub_key,
     unsigned short payToAddressVersion,
     unsigned short payToScriptHashVersion,
-    const char* native_segwit_prefix,
     char * address,
     unsigned char max_address_length
 ) {
     int address_length;
-  
+
     uint8_t tmp[20];
     btchip_public_key_hash160(compressed_pub_key,   // IN
                                 33,                   // INLEN
@@ -72,7 +70,6 @@ int handle_check_address(check_address_parameters_t* params, btchip_altcoin_conf
         compressed_public_key,
         coin_config->p2pkh_version,
         coin_config->p2st_version,
-        coin_config->native_segwit_prefix,
         address,
         sizeof(address))) {
         PRINTF("Can't create address from given public key\n");
