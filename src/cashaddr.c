@@ -141,14 +141,15 @@ int cashaddr_encode(uint8_t *hash, const size_t hash_length, uint8_t *addr,
 
     // pad out tmp
     tmp[0] = version_byte;
-    tmp[1] = 0x00;
-    tmp[2] = 0x51;
-    tmp[3] = 0x14;
-    memmove(tmp + 4, hash, hash_length);
+    tmp[1] = 0x17;
+    tmp[2] = 0x00;
+    tmp[3] = 0x51;
+    tmp[4] = 0x14;
+    memmove(tmp + 5, hash, hash_length);
 
-    PRINTF("tmp=\n%.*H\n", hash_length + 4 , tmp);
+    PRINTF("tmp=\n%.*H\n", hash_length + 5 , tmp);
 
-    convert_bits(payload, &payload_length, 5, tmp, hash_length + 1, 8, 1);
+    convert_bits(payload, &payload_length, 5, tmp, hash_length + 5, 8, 1);
 
     PRINTF("payload=\n%.*H\n", payload_length , payload);
 
