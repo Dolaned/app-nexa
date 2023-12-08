@@ -80,7 +80,7 @@ unsigned short btchip_apdu_hash_input_start() {
             btchip_context_D.transactionContext.firstSigned = 1;
             btchip_context_D.transactionContext.consumeP2SH = 0;
             btchip_context_D.transactionContext.relaxed = 0;
-            btchip_context_D.usingCashAddr = (G_coin_config->kind == COIN_KIND_BITCOIN_CASH ? usingCashAddr : 0);
+            btchip_context_D.usingCashAddr = true
             btchip_set_check_internal_structure_integrity(1);
             // Initialize for screen pairing
             memset(&btchip_context_D.tmpCtx.output, 0, sizeof(btchip_context_D.tmpCtx.output));

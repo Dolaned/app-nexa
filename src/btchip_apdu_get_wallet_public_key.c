@@ -74,10 +74,6 @@ unsigned short btchip_apdu_get_wallet_public_key() {
     case P2_LEGACY:
         break;
     case P2_CASHADDR:
-        if (G_coin_config->kind != COIN_KIND_BITCOIN_CASH)
-        {
-            return BTCHIP_SW_INCORRECT_P1_P2;
-        }
         break;
     default:
         return BTCHIP_SW_INCORRECT_P1_P2;
@@ -127,8 +123,13 @@ unsigned short btchip_apdu_get_wallet_public_key() {
     }
     // Cashaddr
     uint8_t tmp[20];
-    btchip_public_key_hash160(G_io_apdu_buffer + 1, // IN
-                                keyLength,            // INLEN
+    uint8_t buffer[keyLength + 1];
+    buffer[0] = keyLength;
+    memcpy(buffer + 1, G_io_apdu_buffer + 1, keyLength);
+
+    PRINTF("keylength:%u", keyLength);
+    btchip_public_key_hash160(buffer, // IN
+                                keyLength + 1,            // INLEN
                                 tmp);
     keyLength =
         cashaddr_encode(tmp, 20, G_io_apdu_buffer + 67, 50, CASHADDR_P2ST);

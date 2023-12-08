@@ -30,7 +30,6 @@ bool get_address_from_compressed_public_key(
     char * address,
     unsigned char max_address_length
 ) {
-    int address_length;
 
     uint8_t tmp[20];
     btchip_public_key_hash160(compressed_pub_key,   // IN

@@ -120,6 +120,7 @@ void app_main(void) {
         }
 
         PRINTF("New APDU received:\n%.*H\n", btchip_context_D.inLength, G_io_apdu_buffer);
+        
 
         app_dispatch();
 

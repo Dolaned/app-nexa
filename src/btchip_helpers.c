@@ -78,7 +78,6 @@ unsigned char btchip_output_script_is_p2sh(unsigned char *buffer)
         {
             return 1;
         }
-    }
     return 0;
 }
 

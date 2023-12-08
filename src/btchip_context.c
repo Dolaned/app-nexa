@@ -31,7 +31,7 @@ void btchip_context_init()
     btchip_context_D.called_from_swap = 0;
     btchip_context_D.currentOutputOffset = 0;
     btchip_context_D.outputParsingState = BTCHIP_OUTPUT_PARSING_NUMBER_OUTPUTS;
-    memset(btchip_context_D.totalOutputAmount, 0 sizeof(btchip_context_D.totalOutputAmount));
+    memset(btchip_context_D.totalOutputAmount, 0, sizeof(btchip_context_D.totalOutputAmount));
     btchip_context_D.changeOutputFound = 0;
 
     if (N_btchip.config_valid != 0x01)

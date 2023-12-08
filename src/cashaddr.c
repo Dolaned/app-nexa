@@ -96,8 +96,7 @@ int cashaddr_encode(uint8_t *hash, const size_t hash_length, uint8_t *addr,
     uint8_t checksum[8] = {0, 0, 0, 0, 0, 0, 0, 0}; // 5-bit bytes.
     uint8_t
         tmp[40]; // 8-bit bytes. Should be enough for 1 version byte + 160 bit
-    uint8_t payload[40]; // 5-bit bytes. Should be enough for 1 version byte +
-                         // 160 bit hash
+    uint8_t payload[40]; // 5-bit bytes. Should be enough for 1 version byte + 160 bit hash
     uint8_t *addr_start;
     size_t payload_length = 0;
     size_t addr_length = 0;
@@ -114,18 +113,29 @@ int cashaddr_encode(uint8_t *hash, const size_t hash_length, uint8_t *addr,
         version_byte = 8;
     }
     else if (version == CASHADDR_P2ST) {
-        version_byte = 19;
+        version_byte = 19; 
         version_byte = version_byte << 3;
     } else {
         return 0;
     }
 
+    // pad out tmp
     tmp[0] = version_byte;
-    memmove(tmp + 1, hash, hash_length);
+    tmp[1] = 0x00;
+    tmp[2] = 0x51;
+    tmp[3] = 0x14;
+    memmove(tmp + 4, hash, hash_length);
+
+    PRINTF("tmp=\n%.*H\n", hash_length + 4 , tmp);
+
     convert_bits(payload, &payload_length, 5, tmp, hash_length + 1, 8, 1);
 
+    PRINTF("payload=\n%.*H\n", payload_length , payload);
+
+    PRINTF("payload_length=%u", payload_length);
+
     create_checksum(payload, payload_length,
-                    checksum); // Assume prefix is 'bitcoincash'
+                    checksum); // Assume prefix is 'nexa'
 
     for (i = 0; i < payload_length; ++i) {
         if (*payload >> 5) {
