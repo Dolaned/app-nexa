@@ -31,52 +31,72 @@
 
 static const char *charset = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
 
-uint64_t cashaddr_polymod_step(uint64_t pre) {
-    uint8_t b = pre >> 35;
-    return ((pre & 0x07ffffffff) << 5) ^ (-((b >> 0) & 1) & 0x98f2bc8e61UL) ^
-           (-((b >> 1) & 1) & 0x79b76d99e2UL) ^
-           (-((b >> 2) & 1) & 0xf33e5fb3c4UL) ^
-           (-((b >> 3) & 1) & 0xae2eabe2a8UL) ^
-           (-((b >> 4) & 1) & 0x1e4f43e470UL);
-}
-
-uint64_t PolyMod(uint8_t *prefix, uint8_t *payload, size_t payload_length) {
+uint64_t PolyMod(uint8_t *prefix, uint8_t *payload, size_t payload_length)
+{
+    const size_t data_len = payload_length + 5;
+    uint8_t data[data_len];
+    data[0] = 110;
+    data[1] = 101;
+    data[2] = 120;
+    data[3] = 97;
+    data[4] = 0;
+    memcpy(data + 5, payload, payload_length);
     size_t i;
     uint64_t c = 1;
-    while (*prefix != 0) {
-        c = cashaddr_polymod_step(c) ^ (*prefix++ & 0x1f); // Prefix
-    }
-    c = cashaddr_polymod_step(c); // The zero valued separator
-    for (i = 0; i < payload_length; ++i) {
-        c = cashaddr_polymod_step(c) ^ (*payload++); // Hash
-    }
-    for (i = 0; i < 8; ++i) {
-        c = cashaddr_polymod_step(c); // 8 zeros for empty checksum
+    for (i = 0; i < data_len; ++i)
+    {
+        uint8_t c0 = c >> 35;
+        c = ((c & 0x07ffffffff) << 5) ^ data[i];
+        if (c0 & 0x01)
+        {
+            c ^= 0x98f2bc8e61;
+        }
+        if (c0 & 0x02)
+        {
+            c ^= 0x79b76d99e2;
+        }
+        if (c0 & 0x04)
+        {
+            c ^= 0xf33e5fb3c4;
+        }
+        if (c0 & 0x08)
+        {
+            c ^= 0xae2eabe2a8;
+        }
+        if (c0 & 0x10)
+        {
+            c ^= 0x1e4f43e470;
+        }
     }
     return c ^ 1;
 }
 
-static int convert_bits(uint8_t *out, size_t *outlen, int outbits,
-                        const uint8_t *in, size_t inlen, int inbits, int pad) {
-    uint32_t val = 0;
-    int bits = 0;
-    uint32_t maxv = (((uint32_t)1) << outbits) - 1;
-    while (inlen--) {
-        val = (val << inbits) | *(in++);
+static int convert_bits(uint8_t *out, size_t *outlen, int outbits, const uint8_t *in, size_t inlen, int inbits, int pad)
+{
+    size_t acc = 0;
+    size_t bits = 0;
+    const size_t maxv = (1 << outbits) - 1;
+    const size_t max_acc = (1 << (inbits + outbits - 1)) - 1;
+    size_t i;
+    for (i = 0; i < inlen; ++i)
+    {
+        acc = ((acc << inbits) | in[i]) & max_acc;
         bits += inbits;
-        while (bits >= outbits) {
+        while (bits >= outbits)
+        {
             bits -= outbits;
-            out[(*outlen)++] = (val >> bits) & maxv;
+            out[(*outlen)++] = ((acc >> bits) & maxv);
         }
     }
-    if (pad) {
-        if (bits) {
-            out[(*outlen)++] = (val << (outbits - bits)) & maxv;
-        }
-    } else if (((val << (outbits - bits)) & maxv) || bits >= inbits) {
-        return 0;
+    if (!pad && bits)
+    {
+        return 0; // false
     }
-    return 1;
+    if (pad && bits)
+    {
+        out[(*outlen)++] = (acc << (outbits - bits)) & maxv;
+    }
+    return 1; // true
 }
 
 void create_checksum(uint8_t *payload, size_t payload_length,
