@@ -121,6 +121,7 @@ unsigned short btchip_apdu_get_wallet_public_key() {
     {
         return BTCHIP_SW_TECHNICAL_PROBLEM;
     }
+    
     // Cashaddr
     uint8_t tmp[20];
     uint8_t buffer[keyLength + 1];

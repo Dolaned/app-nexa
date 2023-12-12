@@ -129,7 +129,7 @@ unsigned long int transaction_get_varint(void) {
 }
 
 void transaction_parse(unsigned char parseMode) {
-    unsigned char optionP2SHSkip2FA =
+    unsigned char optionP2STSkip2FA =
         ((N_btchip.bkp.config.options & BTCHIP_OPTION_SKIP_2FA_P2SH) != 0);
     btchip_set_check_internal_structure_integrity(0);
     BEGIN_TRY {
@@ -160,24 +160,10 @@ void transaction_parse(unsigned char parseMode) {
                     }
                     // Parse the beginning of the transaction
                     // Version
-                    check_transaction_available(4);
+                    check_transaction_available(1);
                     memmove(btchip_context_D.transactionVersion,
-                               btchip_context_D.transactionBufferPointer, 4);
-                    transaction_offset_increase(4);
-
-                    if (G_coin_config->flags & FLAG_PEERCOIN_SUPPORT)
-                    {
-                        if (((G_coin_config->family ==
-                            BTCHIP_FAMILY_PEERCOIN &&
-                            (btchip_context_D.transactionVersion[0] < 3))) ||
-                            ((G_coin_config->family == BTCHIP_FAMILY_STEALTH) &&
-                            (btchip_context_D.transactionVersion[0] < 2)))
-                        {
-                            // Timestamp
-                            check_transaction_available(4);
-                            transaction_offset_increase(4);
-                        }
-                    }
+                               btchip_context_D.transactionBufferPointer, 1);
+                    transaction_offset_increase(1);
 
                     // Number of inputs
                     btchip_context_D.transactionContext
@@ -285,7 +271,7 @@ void transaction_parse(unsigned char parseMode) {
                                 goto fail;
                             }
                         }
-                        // Handle non-segwit inputs (i.e. InputHashStart 1st APDU's P2==00 && data[0]==0x00)
+                        // Handle non-segwit inputs (cashaddr) (i.e. InputHashStart 1st APDU's P2==00 && data[0]==0x00)
                         if (!trustedInputFlag)
                         {
                             // Only authorized in relaxed wallet and server
@@ -310,8 +296,8 @@ void transaction_parse(unsigned char parseMode) {
                             btchip_context_D.transactionBufferPointer++;
                             btchip_context_D.transactionDataRemaining--;
                             check_transaction_available(
-                                36); // prevout : 32 hash + 4 index
-                            transaction_offset_increase(36);
+                                32); // prevout : 32 hash + 4 index
+                            transaction_offset_increase(32);
                             PRINTF("Marking relaxed input\n");
                             btchip_context_D.transactionContext.relaxed = 1;
                             /*
@@ -404,25 +390,6 @@ void transaction_parse(unsigned char parseMode) {
                         // No more data to read, ok
                         goto ok;
                     }
-                    // Scan for P2SH consumption - huge shortcut, but fine enough
-                    if (btchip_context_D.transactionContext.scriptRemaining ==
-                        1) {
-                        if (*btchip_context_D.transactionBufferPointer ==
-                            OP_CHECKMULTISIG) {
-                            if (optionP2SHSkip2FA) {
-                                PRINTF("Marking P2SH consumption\n");
-                                btchip_context_D.transactionContext
-                                    .consumeP2SH = 1;
-                            }
-                        } else {
-                            // When using the P2SH shortcut, all inputs must use
-                            // P2SH
-                            PRINTF("Disabling P2SH consumption\n");
-                            btchip_context_D.transactionContext.consumeP2SH = 0;
-                        }
-                        transaction_offset_increase(1);
-                        btchip_context_D.transactionContext.scriptRemaining--;
-                    }
 
                     if (btchip_context_D.transactionContext.scriptRemaining == 0)
                     {
@@ -435,6 +402,10 @@ void transaction_parse(unsigned char parseMode) {
                         // Sequence
                         check_transaction_available(4);
                         transaction_offset_increase(4);
+
+                        //amount
+                        check_transaction_available(8);
+                        transaction_offset_increase(8);
                         // Move to next input
                         btchip_context_D.transactionContext
                             .transactionRemainingInputsOutputs--;
@@ -500,6 +471,13 @@ void transaction_parse(unsigned char parseMode) {
                         // No more data to read, ok
                         goto ok;
                     }
+                    //type
+                    check_transaction_available(1);
+                    memmove(btchip_context_D.transactionContext.outputType,
+                            btchip_context_D.transactionBufferPointer,
+                            1);
+                    transaction_offset_increase(1);
+
                     // Amount
                     check_transaction_available(8);
                     if ((parseMode == PARSE_MODE_TRUSTED_INPUT) &&
@@ -528,20 +506,6 @@ void transaction_parse(unsigned char parseMode) {
                 case BTCHIP_TRANSACTION_OUTPUT_HASHING_IN_PROGRESS_OUTPUT_SCRIPT: {
                     unsigned char dataAvailable;
                     PRINTF("Process output script, remaining " DEBUG_LONG "\n",btchip_context_D.transactionContext.scriptRemaining);
-                    /*
-                    // Special check if consuming a P2SH script
-                    if (parseMode == PARSE_MODE_TRUSTED_INPUT) {
-                      // Assume the full input script is sent in a single APDU,
-                    then do the ghetto validation
-                      if ((btchip_context_D.transactionBufferPointer[0] ==
-                    OP_HASH160) &&
-                          (btchip_context_D.transactionBufferPointer[btchip_context_D.transactionDataRemaining
-                    - 1] == OP_EQUAL)) {
-                        PRINTF("Marking P2SH output\n");
-                        btchip_context_D.transactionContext.consumeP2SH = 1;
-                      }
-                    }
-                    */
                     if (btchip_context_D.transactionDataRemaining < 1) {
                         // No more data to read, ok
                         goto ok;

@@ -28,15 +28,12 @@
 #endif // HAVE_NBGL
 
 
-#define MAX_OUTPUT_TO_CHECK 100
+#define MAX_OUTPUT_TO_CHECK 256
 #define MAX_COIN_ID 13
 #define MAX_SHORT_COIN_ID 5
 
 #define MAGIC_TRUSTED_INPUT 0x32
 #define MAGIC_DEV_KEY 0x01
-
-#define ZCASH_USING_OVERWINTER 0x01
-#define ZCASH_USING_OVERWINTER_SAPLING 0x02
 
 enum btchip_modes_e {
     BTCHIP_MODE_ISSUER = 0x00,
@@ -98,10 +95,8 @@ enum btchip_output_parsing_state_e {
 typedef enum btchip_output_parsing_state_e btchip_output_parsing_state_t;
 
 
-typedef union multi_hash
-{
+typedef union multi_hash{
     cx_sha256_t sha256;
-    cx_blake2b_t blake2b;
 } multi_hash;
 
 /**
@@ -128,8 +123,6 @@ struct btchip_transaction_context_s {
     unsigned char firstSigned;
     /** If the transaction is relaxed */
     unsigned char relaxed;
-    /** If the transaction consumes a P2SH input */
-    unsigned char consumeP2SH;
 };
 typedef struct btchip_transaction_context_s btchip_transaction_context_t;
 
@@ -168,9 +161,10 @@ struct btchip_context_s {
     /** Current hash to perform (TRANSACTION_HASH_) */
     unsigned char transactionHashOption;
 
-    unsigned char transactionVersion[4];
+    unsigned char transactionVersion;
     unsigned char inputValue[8];
     unsigned char usingCashAddr;
+    unsigned char outputType;
 
     /* /Segregated Witness changes */
 
@@ -216,60 +210,12 @@ struct btchip_context_s {
     unsigned char totalOutputAmount[8];
     unsigned char changeOutputFound;
 
-    /* Overwinter */
-    unsigned char usingOverwinter;
-    unsigned char overwinterSignReady;
-    unsigned char nVersionGroupId[4];
-    unsigned char nExpiryHeight[4];
-    unsigned char nLockTime[4];
-    unsigned char sigHashType[4];
-
     /*Is swap mode*/
     unsigned char called_from_swap;
 };
 typedef struct btchip_context_s btchip_context_t;
 
-
-/**
- * Structure to configure the bitcoin application for a given altcoin
- *
- */
-typedef enum btchip_coin_flags_e {
-    FLAG_PEERCOIN_UNITS=1,
-    FLAG_PEERCOIN_SUPPORT=2,
-} btchip_coin_flags_t;
-
-
 typedef enum btchip_coin_kind_e {
-    COIN_KIND_BITCOIN_TESTNET,
-    COIN_KIND_BITCOIN,
-    COIN_KIND_BITCOIN_CASH,
-    COIN_KIND_BITCOIN_GOLD,
-    COIN_KIND_LITECOIN,
-    COIN_KIND_DOGE,
-    COIN_KIND_DASH,
-    COIN_KIND_ZCASH,
-    COIN_KIND_KOMODO,
-    COIN_KIND_RFU,
-    COIN_KIND_STRATIS,
-    COIN_KIND_PEERCOIN,
-    COIN_KIND_PIVX,
-    COIN_KIND_STEALTH,
-    COIN_KIND_VIACOIN,
-    COIN_KIND_VERTCOIN,
-    COIN_KIND_DIGIBYTE,
-    COIN_KIND_BITCOIN_PRIVATE,
-    COIN_KIND_XRHODIUM,
-    COIN_KIND_HORIZEN,
-    COIN_KIND_GAMECREDITS,
-    COIN_KIND_FIRO,
-    COIN_KIND_ZCLASSIC,
-    COIN_KIND_XSN,
-    COIN_KIND_NIX,
-    COIN_KIND_LBRY,
-    COIN_KIND_RESISTANCE,
-    COIN_KIND_RAVENCOIN,
-    COIN_KIND_HYDRA,
     COIN_KIND_NEXA
 } btchip_coin_kind_t;
 
@@ -286,8 +232,6 @@ typedef struct btchip_altcoin_config_s {
     char coinid[14]; // used coind id for message signature prefix
     char name[16]; // for ux displays
     char name_short[6]; // for unit in ux displays
-    unsigned int forkid;
-    unsigned int zcash_consensus_branch_id;
     btchip_coin_kind_t kind;
     unsigned int flags;
 } btchip_altcoin_config_t;

@@ -25,17 +25,22 @@ bool derive_compressed_public_key(
 bool get_address_from_compressed_public_key(
     unsigned char format,
     unsigned char* compressed_pub_key,
-    unsigned short payToAddressVersion,
-    unsigned short payToScriptHashVersion,
     char * address,
     unsigned char max_address_length
 ) {
 
+    // Cashaddr P2ST
+    int keyLength = 33;
     uint8_t tmp[20];
-    btchip_public_key_hash160(compressed_pub_key,   // IN
-                                33,                   // INLEN
+    uint8_t buffer[keyLength + 1];
+    buffer[0] = keyLength;
+    memcpy(buffer + 1, address, keyLength);
+
+    PRINTF("keylength:%u", keyLength);
+    btchip_public_key_hash160(buffer, // IN
+                                keyLength + 1,            // INLEN
                                 tmp);
-    if (!cashaddr_encode(tmp, 20, (uint8_t *)address, max_address_length, CASHADDR_P2PKH))
+    if (!cashaddr_encode(tmp, 20, (uint8_t *)address, max_address_length, CASHADDR_P2ST))
         return false;
 
     return true;
@@ -67,8 +72,6 @@ int handle_check_address(check_address_parameters_t* params, btchip_altcoin_conf
     if (!get_address_from_compressed_public_key(
         params->address_parameters[0],
         compressed_public_key,
-        coin_config->p2pkh_version,
-        coin_config->p2st_version,
         address,
         sizeof(address))) {
         PRINTF("Can't create address from given public key\n");

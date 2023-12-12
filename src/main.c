@@ -491,12 +491,6 @@ void init_coin_config(btchip_altcoin_config_t *coin_config) {
     memcpy(&coin_config->img_nbgl, &COIN_ICON, sizeof(nbgl_icon_details_t));
     coin_config->img_nbgl.bitmap = coin_config->img_raw;
 #endif // HAVE_NBGL
-#ifdef COIN_FORKID
-    coin_config->forkid = COIN_FORKID;
-#endif // COIN_FORKID
-#ifdef COIN_CONSENSUS_BRANCH_ID
-    coin_config->zcash_consensus_branch_id = COIN_CONSENSUS_BRANCH_ID;
-#endif // COIN_CONSENSUS_BRANCH_ID
 #ifdef COIN_FLAGS
     coin_config->flags = COIN_FLAGS;
 #endif // COIN_FLAGS
