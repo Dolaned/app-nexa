@@ -123,6 +123,8 @@ struct btchip_transaction_context_s {
     unsigned char firstSigned;
     /** If the transaction is relaxed */
     unsigned char relaxed;
+    //Output type
+    unsigned char outputType;
 };
 typedef struct btchip_transaction_context_s btchip_transaction_context_t;
 
@@ -164,7 +166,7 @@ struct btchip_context_s {
     unsigned char transactionVersion;
     unsigned char inputValue[8];
     unsigned char usingCashAddr;
-    unsigned char outputType;
+  
 
     /* /Segregated Witness changes */
 

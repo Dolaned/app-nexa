@@ -62,8 +62,6 @@ unsigned short btchip_apdu_hash_input_start() {
 
     if ((G_io_apdu_buffer[ISO_OFFSET_P2] == P2_NEW) ||
         (G_io_apdu_buffer[ISO_OFFSET_P2] == P2_NEW_CASHADDR)) {
-        // btchip_context_D.transactionContext.consumeP2SH =
-        // ((N_btchip.bkp.config.options & BTCHIP_OPTION_SKIP_2FA_P2SH) != 0);
         if (G_io_apdu_buffer[ISO_OFFSET_P1] == P1_FIRST) {
             unsigned char usingCashAddr = (G_io_apdu_buffer[ISO_OFFSET_P2] == P2_NEW_CASHADDR);
             // Request PIN validation
@@ -78,7 +76,6 @@ unsigned short btchip_apdu_hash_input_start() {
             }
             // Master transaction reset
             btchip_context_D.transactionContext.firstSigned = 1;
-            btchip_context_D.transactionContext.consumeP2SH = 0;
             btchip_context_D.transactionContext.relaxed = 0;
             btchip_context_D.usingCashAddr = true
             btchip_set_check_internal_structure_integrity(1);

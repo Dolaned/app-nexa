@@ -23,13 +23,10 @@ unsigned char
 btchip_convert_hex_amount_to_displayable_no_globals(unsigned char *amount, unsigned int config_flag, unsigned char* out) {
     unsigned char LOOP1;
     unsigned char LOOP2;
-    if (!(config_flag & FLAG_PEERCOIN_UNITS)) {
-        LOOP1 = 13;
-        LOOP2 = 8;
-    } else {
-        LOOP1 = 15;
-        LOOP2 = 6;
-    }
+
+    LOOP1 = 15;
+    LOOP2 = 6;
+   
     unsigned short scratch[SCRATCH_SIZE];
     unsigned char offset = 0;
     unsigned char nonZero = 0;

@@ -83,14 +83,7 @@ unsigned char btchip_output_script_is_p2sh(unsigned char *buffer)
 
 unsigned char btchip_output_script_is_op_return(unsigned char *buffer)
 {
-    if (G_coin_config->kind == COIN_KIND_BITCOIN_CASH)
-    {
-        return ((buffer[1] == 0x6A) || ((buffer[1] == 0x00) && (buffer[2] == 0x6A)));
-    }
-    else
-    {
-        return (buffer[1] == 0x6A);
-    }
+    return (buffer[1] == 0x6A);
 }
 
 static unsigned char output_script_is_op_create_or_call(unsigned char *buffer,
@@ -403,6 +396,14 @@ int btchip_sign_finalhash(unsigned char* path, size_t path_len, unsigned char *i
     if (!parse_serialized_path(&bip32Path, path, path_len)) {
         return -1;
     }
+
+    uint8_t msg[32]; /* All zero message */
+    uint8_t aux[32]; /* All zero auxiliary data */
+    uint8_t signature[64];
+    size_t signatureLen = sizeof(signature);
+    memcpy(signature, aux, sizeof(aux)); /* First copy the auxiliary data to the signature array */
+    cx_ecschnorr_sign_no_throw(bip32Path.path, CX_ECSCHNORR_LIBSECP | CX_RND_PROVIDED, CX_SHA256, msg, sizeof(msg), signature, &signatureLen);
+
 
     if (bip32_derive_ecdsa_sign_hash_256(
             CX_CURVE_SECP256K1,

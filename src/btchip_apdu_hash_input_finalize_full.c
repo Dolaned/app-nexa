@@ -67,15 +67,6 @@ static bool check_output_displayable() {
     isOpCall =
         btchip_output_script_is_op_call(btchip_context_D.currentOutput + 8,
           sizeof(btchip_context_D.currentOutput) - 8);
-    if (((G_coin_config->kind == COIN_KIND_HYDRA) &&
-         !btchip_output_script_is_regular(btchip_context_D.currentOutput + 8) &&
-         !isP2sh && !(nullAmount && isOpReturn) && !isOpCreate && !isOpCall) ||
-        (!(G_coin_config->kind == COIN_KIND_HYDRA) &&
-         !btchip_output_script_is_regular(btchip_context_D.currentOutput + 8) &&
-         !isP2sh && !(nullAmount && isOpReturn))) {
-        PRINTF("Error : Unrecognized output script");
-        THROW(EXCEPTION);
-    }
     if (btchip_context_D.tmpCtx.output.changeInitialized && !isOpReturn)
     {
         unsigned char addressOffset = (isP2sh ? OUTPUT_SCRIPT_P2SH_PRE_LENGTH : OUTPUT_SCRIPT_REGULAR_PRE_LENGTH);

@@ -21,12 +21,12 @@
 #include "btchip_display_variables.h"
 #include "ui.h"
 
-#define SIGHASH_ALL 0x01
+#define SIGHASH_ALL 0x00
 
 unsigned short btchip_apdu_hash_sign() {
     unsigned long int lockTime;
     uint32_t sighashType;
-    unsigned char dataBuffer[8];
+    unsigned char dataBuffer[5];
     unsigned char authorizationLength;
     unsigned char *parameters = G_io_apdu_buffer + ISO_OFFSET_CDATA;
     unsigned short sw = SW_TECHNICAL_DETAILS(0xF);
@@ -79,26 +79,17 @@ unsigned short btchip_apdu_hash_sign() {
 
     if (((N_btchip.bkp.config.options &
                     BTCHIP_OPTION_FREE_SIGHASHTYPE) == 0)) {
-        // if bitcoin cash OR forkid is set, then use the fork id
-        if (G_coin_config->kind == COIN_KIND_BITCOIN_CASH ||
-                (G_coin_config->forkid)) {
-#define SIGHASH_FORKID 0x40
-            if (sighashType != (SIGHASH_ALL | SIGHASH_FORKID)) {
-                sw = BTCHIP_SW_INCORRECT_DATA;
-                goto discardTransaction;
-            }
-            sighashType |= (G_coin_config->forkid << 8);
-        } else {
-            if (sighashType != SIGHASH_ALL) {
-                sw = BTCHIP_SW_INCORRECT_DATA;
-                goto discardTransaction;
-            }
+
+        if (sighashType != SIGHASH_ALL) {
+            sw = BTCHIP_SW_INCORRECT_DATA;
+            goto discardTransaction;
         }
+        
     }
 
     // Finalize the hash
     btchip_write_u32_le(dataBuffer, lockTime);
-    btchip_write_u32_le(dataBuffer + 4, sighashType);
+    dataBuffer[4] = sighashType;
     PRINTF("--- ADD TO HASH FULL:\n%.*H\n", sizeof(dataBuffer), dataBuffer);
     if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.sha256.header, 0,
             dataBuffer, sizeof(dataBuffer), NULL, 0)) {

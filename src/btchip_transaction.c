@@ -129,7 +129,7 @@ unsigned long int transaction_get_varint(void) {
 }
 
 void transaction_parse(unsigned char parseMode) {
-    unsigned char optionP2STSkip2FA =
+    unsigned char optionP2SHSkip2FA =
         ((N_btchip.bkp.config.options & BTCHIP_OPTION_SKIP_2FA_P2SH) != 0);
     btchip_set_check_internal_structure_integrity(0);
     BEGIN_TRY {
@@ -300,10 +300,6 @@ void transaction_parse(unsigned char parseMode) {
                             transaction_offset_increase(32);
                             PRINTF("Marking relaxed input\n");
                             btchip_context_D.transactionContext.relaxed = 1;
-                            /*
-                            PRINTF("Clearing P2SH consumption\n");
-                            btchip_context_D.transactionContext.consumeP2SH = 0;
-                            */
                         }
                         // Handle non-segwit TrustedInput (i.e. InputHashStart 1st APDU's P2==00 & data[0]==0x01)
                         else if (trustedInputFlag)
@@ -319,15 +315,6 @@ void transaction_parse(unsigned char parseMode) {
                             // Update the hash with prevout data
                             savePointer =
                                 btchip_context_D.transactionBufferPointer;
-                            /*
-                            // Check if a P2SH script is used
-                            if ((trustedInput[1] & FLAG_TRUSTED_INPUT_P2SH) ==
-                            0) {
-                              PRINTF("Clearing P2SH consumption\n");
-                              btchip_context_D.transactionContext.consumeP2SH =
-                            0;
-                            }
-                            */
                             btchip_context_D.transactionBufferPointer =
                                 trustedInput + 4;
                             PRINTF("Trusted input hash\n%.*H\n",36,btchip_context_D.transactionBufferPointer);

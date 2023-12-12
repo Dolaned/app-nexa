@@ -43,7 +43,6 @@ unsigned short btchip_apdu_get_trusted_input() {
         btchip_context_D.transactionContext.transactionState =
             BTCHIP_TRANSACTION_NONE;
         btchip_context_D.trustedInputProcessed = 0;
-        btchip_context_D.transactionContext.consumeP2SH = 0;
         btchip_set_check_internal_structure_integrity(1);
         dataOffset = 4;
         btchip_context_D.transactionHashOption = TRANSACTION_HASH_FULL;

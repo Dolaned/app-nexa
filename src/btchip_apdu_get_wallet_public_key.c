@@ -54,7 +54,7 @@ unsigned short btchip_apdu_get_wallet_public_key() {
     bool display = (G_io_apdu_buffer[ISO_OFFSET_P1] == P1_DISPLAY);
     bool display_request_token = N_btchip.pubKeyRequestRestriction && (G_io_apdu_buffer[ISO_OFFSET_P1] == P1_REQUEST_TOKEN) && G_io_apdu_media == IO_APDU_MEDIA_U2F;
     bool require_user_approval = N_btchip.pubKeyRequestRestriction && !(display_request_token || display) && G_io_apdu_media == IO_APDU_MEDIA_U2F;
-    bool cashAddr = (G_io_apdu_buffer[ISO_OFFSET_P2] == P2_CASHADDR);
+    // bool cashAddr = (G_io_apdu_buffer[ISO_OFFSET_P2] == P2_CASHADDR);
     if (display && btchip_context_D.called_from_swap)
     {
         return BTCHIP_SW_INCORRECT_DATA;
@@ -124,7 +124,7 @@ unsigned short btchip_apdu_get_wallet_public_key() {
     
     // Cashaddr
     uint8_t tmp[20];
-    uint8_t buffer[keyLength + 1];
+    uint8_t buffer[33 + 1];
     buffer[0] = keyLength;
     memcpy(buffer + 1, G_io_apdu_buffer + 1, keyLength);
 
