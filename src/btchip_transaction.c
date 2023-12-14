@@ -653,23 +653,47 @@ void transaction_parse(unsigned char parseMode) {
             THROW(EXCEPTION);
         ok : {
             //transactionVersion
-            cx_hash_no_throw(&btchip_context_D.transactionVersion, CX_LAST, NULL, 0, &btchip_context_D.transactionHashFull.header, 1);
+            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, btchip_context_D.transactionVersion, 1, NULL, 0);
+
             // prevouts
-            cx_hash_no_throw(&btchip_context_D.hashPrevouts.header, CX_LAST, NULL, 0, &btchip_context_D.transactionHashFull.header, 32);
+            unsigned char prevoutHash[32];
+            memset(prevoutHash, 0, 32);
+            cx_hash_no_throw(&btchip_context_D.hashPrevouts.header, CX_LAST, NULL, 0, &prevoutHash, 32);
+            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, prevoutHash, 32, NULL, 0);
+
             //input amounts
-            cx_hash_no_throw(&btchip_context_D.hashInputAmounts.header, CX_LAST, NULL, 0, &btchip_context_D.transactionHashFull.header, 32);
+            unsigned char hashInputAmounts[32];
+            memset(hashInputAmounts, 0, 32);
+            cx_hash_no_throw(&btchip_context_D.hashInputAmounts.header, CX_LAST, NULL, 0, &hashInputAmounts, 32);
+            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, hashInputAmounts, 32, NULL, 0);
+
             //sequence
-            cx_hash_no_throw(&btchip_context_D.hashSequence.header, CX_LAST, NULL, 0, &btchip_context_D.transactionHashFull.header, 32);
+            unsigned char hashSequence[32];
+            memset(hashSequence, 0, 32);
+            cx_hash_no_throw(&btchip_context_D.hashSequence.header, CX_LAST, NULL, 0, &hashSequence, 32);
+            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, hashSequence, 32, NULL, 0);
+
             //0x6CAD
             unsigned char scriptcode[2] = { 0x6C, 0xAD };
-            cx_hash_no_throw(scriptcode, CX_LAST, NULL, 0, &btchip_context_D.transactionHashFull.header, 2);
+            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, scriptcode, 2, NULL, 0);
+
             //Outputs
-            cx_hash_no_throw(&btchip_context_D.hashOutputs.header, 0, &btchip_context_D.transactionHashFull.header, value, NULL, 0);
+            unsigned char hashOutputs[32];
+            memset(hashOutputs, 0, 32);
+            cx_hash_no_throw(&btchip_context_D.hashOutputs.header, CX_LAST, NULL, 0, &hashOutputs, 32);
+            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, hashOutputs, 32, NULL, 0);
+
             //locktime
-            cx_hash_no_throw(&btchip_context_D.lockTime, CX_LAST, NULL, 0, &btchip_context_D.transactionHashFull.header, 4);
+            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, btchip_context_D.lockTime, 4, NULL, 0);
+
             // 0x00
             unsigned char hashtype = 0;
-            cx_hash_no_throw(hashtype, CX_LAST, NULL, 0, &btchip_context_D.transactionHashFull.header, 1);
+            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, btchip_context_D.transactionHashFull.header, 1, NULL, 0);
+
+            //finally finalise hash buffer
+            unsigned char transactionHashFull[32];
+            memset(transactionHashFull, 0, 32);
+            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, CX_LAST, NULL, 0, &transactionHashFull, 32);
         }
         }
         CATCH_OTHER(e) {
