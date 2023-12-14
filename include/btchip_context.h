@@ -171,6 +171,7 @@ struct btchip_context_s {
     cx_sha256_t hashOutputs;
 
     unsigned char transactionVersion;
+    unsigned char lockTime[4];
     unsigned char inputValue[8];
     unsigned char usingCashAddr;
   

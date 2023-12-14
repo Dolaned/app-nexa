@@ -580,6 +580,8 @@ void transaction_parse(unsigned char parseMode) {
                     }
                     // Locktime
                     check_transaction_available(4);
+                    memmove(btchip_context_D.lockTime,
+                               btchip_context_D.transactionBufferPointer, 4);
                     transaction_offset_increase(4, 0);
 
                     if (btchip_context_D.transactionDataRemaining == 0) {
@@ -649,7 +651,26 @@ void transaction_parse(unsigned char parseMode) {
         fail:
             PRINTF("Transaction parse - fail\n");
             THROW(EXCEPTION);
-        ok : {}
+        ok : {
+            //transactionVersion
+            cx_hash_no_throw(&btchip_context_D.transactionVersion, CX_LAST, NULL, 0, &btchip_context_D.transactionHashFull.header, 1);
+            // prevouts
+            cx_hash_no_throw(&btchip_context_D.hashPrevouts.header, CX_LAST, NULL, 0, &btchip_context_D.transactionHashFull.header, 32);
+            //input amounts
+            cx_hash_no_throw(&btchip_context_D.hashInputAmounts.header, CX_LAST, NULL, 0, &btchip_context_D.transactionHashFull.header, 32);
+            //sequence
+            cx_hash_no_throw(&btchip_context_D.hashSequence.header, CX_LAST, NULL, 0, &btchip_context_D.transactionHashFull.header, 32);
+            //0x6CAD
+            unsigned char scriptcode[2] = { 0x6C, 0xAD };
+            cx_hash_no_throw(scriptcode, CX_LAST, NULL, 0, &btchip_context_D.transactionHashFull.header, 2);
+            //Outputs
+            cx_hash_no_throw(&btchip_context_D.hashOutputs.header, 0, &btchip_context_D.transactionHashFull.header, value, NULL, 0);
+            //locktime
+            cx_hash_no_throw(&btchip_context_D.lockTime, CX_LAST, NULL, 0, &btchip_context_D.transactionHashFull.header, 4);
+            // 0x00
+            unsigned char hashtype = 0;
+            cx_hash_no_throw(hashtype, CX_LAST, NULL, 0, &btchip_context_D.transactionHashFull.header, 1);
+        }
         }
         CATCH_OTHER(e) {
             PRINTF("Transaction parse - surprise fail\n");
