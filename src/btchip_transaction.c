@@ -237,8 +237,8 @@ void transaction_parse(unsigned char parseMode) {
                     // Proceed with the next input
                     if (parseMode == PARSE_MODE_TRUSTED_INPUT) {
                         check_transaction_available(
-                            32); // prevout : 32 hash + 4 index
-                        transaction_offset_increase(32, PREVOUT);
+                            33); // prevout : 1 type + 32 hash
+                        transaction_offset_increase(33, PREVOUT);
                     }
                     if (parseMode == PARSE_MODE_SIGNATURE) {
                         unsigned char trustedInputLength;
@@ -318,8 +318,8 @@ void transaction_parse(unsigned char parseMode) {
                             btchip_context_D.transactionBufferPointer++;
                             btchip_context_D.transactionDataRemaining--;
                             check_transaction_available(
-                                32); // prevout : 32 hash + 4 index
-                            transaction_offset_increase(32, PREVOUT);
+                                33); // prevout : 1 type + 32 hash
+                            transaction_offset_increase(33, PREVOUT);
                             PRINTF("Marking relaxed input\n");
                             btchip_context_D.transactionContext.relaxed = 1;
                         }
@@ -370,7 +370,7 @@ void transaction_parse(unsigned char parseMode) {
                     }
                     // Read the script length
                     btchip_context_D.transactionContext.scriptRemaining =
-                        transaction_get_varint(INPUTAMOUNTS);
+                        transaction_get_varint(0);
                     PRINTF("Script to read " DEBUG_LONG "\n",btchip_context_D.transactionContext.scriptRemaining);
 
                     if ((parseMode == PARSE_MODE_SIGNATURE) && !trustedInputFlag)
@@ -457,7 +457,7 @@ void transaction_parse(unsigned char parseMode) {
                     // Number of outputs
                     btchip_context_D.transactionContext
                         .transactionRemainingInputsOutputs =
-                        transaction_get_varint(OUTPUTS);
+                        transaction_get_varint(0);
                     btchip_context_D.transactionContext
                         .transactionCurrentInputOutput = 0;
                     PRINTF("Number of outputs : " DEBUG_LONG "\n",
@@ -540,7 +540,7 @@ void transaction_parse(unsigned char parseMode) {
                     if (dataAvailable == 0) {
                         goto ok;
                     }
-                    transaction_offset_increase(dataAvailable, 0);
+                    transaction_offset_increase(dataAvailable, OUTPUTS);
                     btchip_context_D.transactionContext.scriptRemaining -=
                         dataAvailable;
                     break;
