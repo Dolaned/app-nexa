@@ -18,6 +18,7 @@
 #include "btchip_internal.h"
 #include "btchip_apdu_constants.h"
 #include "lib_standard_app/crypto_helpers.h"
+#include "schnorr.h"
 #include "bip32_path.h"
 
 const unsigned char TRANSACTION_OUTPUT_SCRIPT_PRE[] = {

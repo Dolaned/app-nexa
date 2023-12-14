@@ -4,6 +4,7 @@
 
 #include "os.h"
 #include "cx.h"
+#include "lib_standard_app/crypto_helpers.h"
 
 WARN_UNUSED_RESULT cx_err_t bip32_derive_with_seed_schnorr_sign_hash_256(unsigned int derivation_mode,
                                                                        cx_curve_t   curve,
@@ -15,7 +16,6 @@ WARN_UNUSED_RESULT cx_err_t bip32_derive_with_seed_schnorr_sign_hash_256(unsigne
                                                                        size_t          hash_len,
                                                                        uint8_t        *sig,
                                                                        size_t         *sig_len,
-                                                                       uint32_t       *info,
                                                                        unsigned char  *seed,
                                                                        size_t          seed_len)
 {
@@ -28,7 +28,7 @@ WARN_UNUSED_RESULT cx_err_t bip32_derive_with_seed_schnorr_sign_hash_256(unsigne
         derivation_mode, curve, path, path_len, &privkey, NULL, seed, seed_len));
 
     CX_CHECK(
-        cx_ecschnorr_sign_no_throw(&privkey, sign_mode, hashID, hash, hash_len, sig, sig_len, info));
+        cx_ecschnorr_sign_no_throw(&privkey, sign_mode, hashID, hash, hash_len, sig, sig_len));
 
 end:
     explicit_bzero(&privkey, sizeof(privkey));

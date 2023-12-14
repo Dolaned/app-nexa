@@ -217,7 +217,7 @@ void transaction_parse(unsigned char parseMode) {
                     // Parse the beginning of the transaction
                     // Version
                     check_transaction_available(1);
-                    memmove(btchip_context_D.transactionVersion,
+                    memmove(&btchip_context_D.transactionVersion,
                                btchip_context_D.transactionBufferPointer, 1);
                     transaction_offset_increase(1, 0);
 

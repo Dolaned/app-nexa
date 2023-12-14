@@ -542,7 +542,7 @@ static void library_main_helper(libargs_t *args) {
             // ensure result is zero if an exception is thrown
             args->check_address->result = 0;
             args->check_address->result =
-                handle_check_address(args->check_address, args->coin_config);
+                handle_check_address(args->check_address);
             break;
         case SIGN_TRANSACTION:
             if (copy_transaction_parameters(args->create_transaction)) {
