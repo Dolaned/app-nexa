@@ -126,7 +126,7 @@ void transaction_offset(unsigned char value, unsigned int hashParseType) {
 }
 
 void transaction_offset_increase(unsigned char value, unsigned int hashParseType) {
-    transaction_offset(value, unsigned int hashParseType);
+    transaction_offset(value, hashParseType);
     btchip_context_D.transactionBufferPointer += value;
     btchip_context_D.transactionDataRemaining -= value;
 }
@@ -367,7 +367,7 @@ void transaction_parse(unsigned char parseMode) {
                             btchip_context_D.transactionBufferPointer =
                                 trustedInput + 4;
                             PRINTF("Trusted input hash\n%.*H\n",36,btchip_context_D.transactionBufferPointer);
-                            transaction_offset(36);
+                            transaction_offset(36, 0);
 
                             btchip_context_D.transactionBufferPointer =
                                 savePointer + (2 + trustedInputLength);
@@ -509,7 +509,7 @@ void transaction_parse(unsigned char parseMode) {
                     }
                     //type
                     check_transaction_available(1);
-                    memmove(btchip_context_D.transactionContext.outputType,
+                    memmove(&btchip_context_D.transactionContext.outputType,
                             btchip_context_D.transactionBufferPointer,
                             1);
                     transaction_offset_increase(1, OUTPUTS);
@@ -653,24 +653,24 @@ void transaction_parse(unsigned char parseMode) {
             THROW(EXCEPTION);
         ok : {
             //transactionVersion
-            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, btchip_context_D.transactionVersion, 1, NULL, 0);
+            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, &btchip_context_D.transactionVersion, 1, NULL, 0);
 
             // prevouts
             unsigned char prevoutHash[32];
             memset(prevoutHash, 0, 32);
-            cx_hash_no_throw(&btchip_context_D.hashPrevouts.header, CX_LAST, NULL, 0, &prevoutHash, 32);
+            cx_hash_no_throw(&btchip_context_D.hashPrevouts.header, CX_LAST, NULL, 0, prevoutHash, 32);
             cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, prevoutHash, 32, NULL, 0);
 
             //input amounts
             unsigned char hashInputAmounts[32];
             memset(hashInputAmounts, 0, 32);
-            cx_hash_no_throw(&btchip_context_D.hashInputAmounts.header, CX_LAST, NULL, 0, &hashInputAmounts, 32);
+            cx_hash_no_throw(&btchip_context_D.hashInputAmounts.header, CX_LAST, NULL, 0, hashInputAmounts, 32);
             cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, hashInputAmounts, 32, NULL, 0);
 
             //sequence
             unsigned char hashSequence[32];
             memset(hashSequence, 0, 32);
-            cx_hash_no_throw(&btchip_context_D.hashSequence.header, CX_LAST, NULL, 0, &hashSequence, 32);
+            cx_hash_no_throw(&btchip_context_D.hashSequence.header, CX_LAST, NULL, 0, hashSequence, 32);
             cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, hashSequence, 32, NULL, 0);
 
             //0x6CAD
@@ -680,7 +680,7 @@ void transaction_parse(unsigned char parseMode) {
             //Outputs
             unsigned char hashOutputs[32];
             memset(hashOutputs, 0, 32);
-            cx_hash_no_throw(&btchip_context_D.hashOutputs.header, CX_LAST, NULL, 0, &hashOutputs, 32);
+            cx_hash_no_throw(&btchip_context_D.hashOutputs.header, CX_LAST, NULL, 0, hashOutputs, 32);
             cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, hashOutputs, 32, NULL, 0);
 
             //locktime
@@ -688,12 +688,12 @@ void transaction_parse(unsigned char parseMode) {
 
             // 0x00
             unsigned char hashtype = 0;
-            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, btchip_context_D.transactionHashFull.header, 1, NULL, 0);
+            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, &hashtype, 1, NULL, 0);
 
             //finally finalise hash buffer
-            unsigned char transactionHashFull[32];
-            memset(transactionHashFull, 0, 32);
-            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, CX_LAST, NULL, 0, &transactionHashFull, 32);
+            // unsigned char transactionHashFull[32];
+            // memset(transactionHashFull, 0, 32);
+            // cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, CX_LAST, NULL, 0, transactionHashFull, 32);
         }
         }
         CATCH_OTHER(e) {
