@@ -134,10 +134,7 @@ void btchip_bagl_user_action_signtx(unsigned char confirming, unsigned char dire
         unsigned char hash[32];
         cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, CX_LAST, hash, 0, hash, 32);
         PRINTF("Hash1\n%.*H\n", sizeof(hash), hash);
-
-        // Rehash
-        cx_hash_sha256(hash, sizeof(hash), hash, 32);
-        PRINTF("Hash2\n%.*H\n", sizeof(hash), hash);
+        
         // Sign
         size_t out_len = sizeof(G_io_apdu_buffer);
         btchip_sign_finalhash(

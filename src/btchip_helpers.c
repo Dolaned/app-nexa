@@ -397,15 +397,7 @@ int btchip_sign_finalhash(unsigned char* path, size_t path_len, unsigned char *i
         return -1;
     }
 
-    uint8_t msg[32]; /* All zero message */
-    uint8_t aux[32]; /* All zero auxiliary data */
-    uint8_t signature[64];
-    size_t signatureLen = sizeof(signature);
-    memcpy(signature, aux, sizeof(aux)); /* First copy the auxiliary data to the signature array */
-    cx_ecschnorr_sign_no_throw(bip32Path.path, CX_ECSCHNORR_LIBSECP | CX_RND_PROVIDED, CX_SHA256, msg, sizeof(msg), signature, &signatureLen);
-
-
-    if (bip32_derive_ecdsa_sign_hash_256(
+    if (bip32_derive_schnorr_sign_hash_256(
             CX_CURVE_SECP256K1,
             bip32Path.path,
             bip32Path.length,
