@@ -85,17 +85,24 @@ void transaction_offset(unsigned char value, unsigned int hashParseType) {
     switch (hashParseType)
     {
         case SEQUENCE:
-        /* code */
+            PRINTF("--- ADD TO SEQUENCE:\n%.*H\n", value, btchip_context_D.transactionBufferPointer);
+            cx_hash_no_throw(&btchip_context_D.hashSequence.header, 0,
+                btchip_context_D.transactionBufferPointer, value, NULL, 0);
             break;
         case PREVOUT:
-        /* code */
+            PRINTF("--- ADD TO PREVOUT:\n%.*H\n", value, btchip_context_D.transactionBufferPointer);
+            cx_hash_no_throw(&btchip_context_D.hashPrevouts.header, 0,
+                btchip_context_D.transactionBufferPointer, value, NULL, 0);
             break;
         case INPUTAMOUNTS:
-
-        /* code */
+            PRINTF("--- ADD TO INPUTAMOUNTS:\n%.*H\n", value, btchip_context_D.transactionBufferPointer);
+            cx_hash_no_throw(&btchip_context_D.hashInputAmounts.header, 0,
+                btchip_context_D.transactionBufferPointer, value, NULL, 0);
             break;
         case OUTPUTS:
-        /* code */
+            PRINTF("--- ADD TO OUTPUTS:\n%.*H\n", value, btchip_context_D.transactionBufferPointer);
+            cx_hash_no_throw(&btchip_context_D.hashOutputs.header, 0,
+                btchip_context_D.transactionBufferPointer, value, NULL, 0);
             break;
     
     default:
