@@ -194,6 +194,26 @@ void transaction_parse(unsigned char parseMode) {
                         &btchip_context_D.transactionHashAuthorization)) {
                         goto fail;
                     }
+
+                    if (cx_sha256_init_no_throw(&btchip_context_D.hashPrevouts))
+                    {
+                        goto fail;
+                    }
+
+                    if (cx_sha256_init_no_throw(&btchip_context_D.hashSequence))
+                    {
+                        goto fail;
+                    }
+
+                    if (cx_sha256_init_no_throw(&btchip_context_D.hashInputAmounts))
+                    {
+                        goto fail;
+                    }
+
+                    if (cx_sha256_init_no_throw(&btchip_context_D.hashOutputs))
+                    {
+                        goto fail;
+                    }
                     // Parse the beginning of the transaction
                     // Version
                     check_transaction_available(1);
