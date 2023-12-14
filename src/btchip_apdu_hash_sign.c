@@ -91,7 +91,7 @@ unsigned short btchip_apdu_hash_sign() {
     btchip_write_u32_le(dataBuffer, lockTime);
     dataBuffer[4] = sighashType;
     PRINTF("--- ADD TO HASH FULL:\n%.*H\n", sizeof(dataBuffer), dataBuffer);
-    if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.sha256.header, 0,
+    if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0,
             dataBuffer, sizeof(dataBuffer), NULL, 0)) {
         goto discardTransaction;
     }
@@ -132,7 +132,7 @@ void btchip_bagl_user_action_signtx(unsigned char confirming, unsigned char dire
     if (confirming)
     {
         unsigned char hash[32];
-        cx_hash_no_throw(&btchip_context_D.transactionHashFull.sha256.header, CX_LAST, hash, 0, hash, 32);
+        cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, CX_LAST, hash, 0, hash, 32);
         PRINTF("Hash1\n%.*H\n", sizeof(hash), hash);
 
         // Rehash

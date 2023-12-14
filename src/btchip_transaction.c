@@ -22,6 +22,12 @@
 #define CONSENSUS_BRANCH_ID_SAPLING 0x76b809bb
 #define CONSENSUS_BRANCH_ID_ZCLASSIC 0x930b540d
 
+//Define for switch statement parsing of transaction for hashing 
+#define PREVOUT 0x01
+#define SEQUENCE 0x02
+#define INPUTAMOUNTS 0x03
+#define OUTPUTS 0x04
+
 #define DEBUG_LONG "%d"
 
 void check_transaction_available(unsigned char x) {
@@ -74,11 +80,33 @@ unsigned char transaction_amount_sub_be(unsigned char *target,
     return borrow;
 }
 
-void transaction_offset(unsigned char value) {
+void transaction_offset(unsigned char value, unsigned int hashParseType) {
+
+    switch (hashParseType)
+    {
+        case SEQUENCE:
+        /* code */
+            break;
+        case PREVOUT:
+        /* code */
+            break;
+        case INPUTAMOUNTS:
+        /* code */
+            break;
+        case INPUTAMOUNTS:
+        /* code */
+            break;
+    
+    default:
+        break;
+    }
+
+
+
     if ((btchip_context_D.transactionHashOption & TRANSACTION_HASH_FULL) != 0)
     {
         PRINTF("--- ADD TO HASH FULL:\n%.*H\n", value, btchip_context_D.transactionBufferPointer);
-        cx_hash_no_throw(&btchip_context_D.transactionHashFull.sha256.header, 0,
+        cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0,
             btchip_context_D.transactionBufferPointer, value, NULL, 0);
     }
     if ((btchip_context_D.transactionHashOption & TRANSACTION_HASH_AUTHORIZATION) != 0)
@@ -89,8 +117,8 @@ void transaction_offset(unsigned char value) {
     }
 }
 
-void transaction_offset_increase(unsigned char value) {
-    transaction_offset(value);
+void transaction_offset_increase(unsigned char value, unsigned int hashParseType) {
+    transaction_offset(value, unsigned int hashParseType);
     btchip_context_D.transactionBufferPointer += value;
     btchip_context_D.transactionDataRemaining -= value;
 }
@@ -150,7 +178,7 @@ void transaction_parse(unsigned char parseMode) {
                                       .transactionAmount));
                     // TODO : transactionControlFid
                     // Reset hashes
-                    if (cx_sha256_init_no_throw(&btchip_context_D.transactionHashFull.sha256))
+                    if (cx_sha256_init_no_throw(&btchip_context_D.transactionHashFull))
                     {
                         goto fail;
                     }
@@ -233,14 +261,7 @@ void transaction_parse(unsigned char parseMode) {
                             PRINTF("Invalid trusted input flag\n");
                             goto fail;
                         }
-                        /*
-                        trustedInputLength =
-                        *(btchip_context_D.transactionBufferPointer + 1);
-                        if (trustedInputLength > sizeof(trustedInput)) {
-                          PRINTF("Trusted input too long\n");
-                          goto fail;
-                        }
-                        */
+
                         // Check TrustedInput (TI) integrity
                         if (trustedInputFlag)
                         {

@@ -94,11 +94,6 @@ enum btchip_output_parsing_state_e {
 };
 typedef enum btchip_output_parsing_state_e btchip_output_parsing_state_t;
 
-
-typedef union multi_hash{
-    cx_sha256_t sha256;
-} multi_hash;
-
 /**
  * Structure defining an operation on a transaction
  */
@@ -157,11 +152,23 @@ struct btchip_context_s {
     unsigned char has_valid_token;
 
     /** Full transaction hash context */
-    union multi_hash transactionHashFull;
+    cx_sha256_t  transactionHashFull;
     /** Authorization transaction hash context */
     cx_sha256_t transactionHashAuthorization;
     /** Current hash to perform (TRANSACTION_HASH_) */
     unsigned char transactionHashOption;
+
+    //sha hash of prevouts
+    cx_sha256_t hashPrevouts;
+
+    // sha hash of sequences
+    cx_sha256_t hashSequence;
+    
+    // sha hash of input amounts
+    cx_sha256_t hashInputAmounts;
+
+    // sha hash of outputs
+    cx_sha256_t hashOutputs;
 
     unsigned char transactionVersion;
     unsigned char inputValue[8];

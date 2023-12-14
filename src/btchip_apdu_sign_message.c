@@ -116,7 +116,7 @@ unsigned short btchip_apdu_sign_message_internal() {
                 goto discard;
             }
             btchip_context_D.hashedMessageLength = 0;
-            if (cx_sha256_init_no_throw(&btchip_context_D.transactionHashFull.sha256)) {
+            if (cx_sha256_init_no_throw(&btchip_context_D.transactionHashFull)) {
                 sw = SW_TECHNICAL_DETAILS(0x0F);
                 goto discard;
             }
@@ -127,17 +127,17 @@ unsigned short btchip_apdu_sign_message_internal() {
             }
             chunkLength =
                 strlen(G_coin_config->coinid) + SIGNMAGIC_LENGTH;
-            if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.sha256.header, 0,
+            if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0,
                         &chunkLength, 1, NULL, 0)) {
                 goto discard;
             }
-            if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.sha256.header, 0,
+            if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0,
                         (uint8_t *)G_coin_config->coinid,
                         strlen(G_coin_config->coinid), NULL, 0)) {
                 sw = SW_TECHNICAL_DETAILS(0x0F);
                 goto discard;
             }
-            if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.sha256.header, 0,
+            if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0,
                         (unsigned char *)SIGNMAGIC, SIGNMAGIC_LENGTH, NULL, 0)) {
                 sw = SW_TECHNICAL_DETAILS(0x0F);
                 goto discard;
@@ -158,7 +158,7 @@ unsigned short btchip_apdu_sign_message_internal() {
                         0xff);
                 messageLengthSize = 3;
             }
-            if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.sha256.header, 0,
+            if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0,
                         messageLength, messageLengthSize, NULL, 0)) {
                 sw = SW_TECHNICAL_DETAILS(0x0F);
                 goto discard;
@@ -170,7 +170,7 @@ unsigned short btchip_apdu_sign_message_internal() {
                 sw = BTCHIP_SW_INCORRECT_DATA;
                 goto discard;
             }
-            if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.sha256.header, 0,
+            if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0,
                         G_io_apdu_buffer + offset, chunkLength, NULL, 0)) {
                 sw = SW_TECHNICAL_DETAILS(0x0F);
                 goto discard;
@@ -197,7 +197,7 @@ unsigned short btchip_apdu_sign_message_internal() {
                 sw = BTCHIP_SW_INCORRECT_DATA;
                 goto discard;
             }
-            if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.sha256.header, 0,
+            if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0,
                         G_io_apdu_buffer + offset, apduLength, NULL, 0)) {
                 sw = SW_TECHNICAL_DETAILS(0x0F);
                 goto discard;
@@ -257,7 +257,7 @@ unsigned short btchip_compute_hash() {
     unsigned short sw = BTCHIP_SW_OK;
 
     btchip_context_D.outLength = 0;
-    if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.sha256.header, CX_LAST, hash,
+    if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, CX_LAST, hash,
                 0, hash, 32)) {
         goto discard;
     }

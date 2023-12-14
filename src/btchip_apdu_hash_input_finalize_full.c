@@ -282,7 +282,7 @@ return_OK:
         goto discardTransaction;
     }
     PRINTF("--- ADD TO HASH FULL:\n%.*H\n", apduLength - hashOffset, G_io_apdu_buffer + ISO_OFFSET_CDATA + hashOffset);
-    if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.sha256.header, 0,
+    if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0,
                 G_io_apdu_buffer + ISO_OFFSET_CDATA + hashOffset,
                 apduLength - hashOffset, NULL, 0))
     {
