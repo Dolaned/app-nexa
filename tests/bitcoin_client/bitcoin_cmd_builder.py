@@ -28,6 +28,7 @@ class AddrType(enum.IntEnum):
     Legacy = 0x00
     P2SH_P2WPKH = 0x01
     BECH32 = 0x02
+    CASHADDR = 0x03
 
 
 class BitcoinCommandBuilder:

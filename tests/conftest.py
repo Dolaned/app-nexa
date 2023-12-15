@@ -37,7 +37,7 @@ def device(request, hid, model):
 
     # Gets the speculos executable from the SPECULOS environment variable,
     # or hopes that "speculos.py" is in the $PATH if not set
-    speculos_executable = os.environ.get("SPECULOS", "speculos.py")
+    speculos_executable = "/usr/bin/speculos"
 
     base_args = [
         speculos_executable, "./bitcoin-testnet-bin/app.elf",
