@@ -53,7 +53,6 @@ WARN_UNUSED_RESULT cx_err_t bip32_derive_with_seed_schnorr_sign_hash_256(unsigne
                                                                        size_t          hash_len,
                                                                        uint8_t        *sig,
                                                                        size_t         *sig_len,
-                                                                       uint32_t       *info,
                                                                        unsigned char  *seed,
                                                                        size_t          seed_len);
 /**

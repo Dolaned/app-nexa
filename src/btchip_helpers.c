@@ -407,8 +407,7 @@ int btchip_sign_finalhash(unsigned char* path, size_t path_len, unsigned char *i
             in,
             inlen,
             out,
-            outlen,
-            &info) != CX_OK) {
+            outlen) != CX_OK) {
         return -1;
     }
 

@@ -690,10 +690,6 @@ void transaction_parse(unsigned char parseMode) {
             unsigned char hashtype = 0;
             cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, &hashtype, 1, NULL, 0);
 
-            //finally finalise hash buffer
-            // unsigned char transactionHashFull[32];
-            // memset(transactionHashFull, 0, 32);
-            // cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, CX_LAST, NULL, 0, transactionHashFull, 32);
         }
         }
         CATCH_OTHER(e) {
