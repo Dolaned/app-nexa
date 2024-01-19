@@ -283,6 +283,7 @@ unsigned char bip44_derivation_guard(unsigned char *bip32Path, bool is_change_pa
        bip32PathInt.path[BIP44_ADDRESS_INDEX_OFFSET] > MAX_BIP44_ADDRESS_INDEX_RECOMMENDED) {
         return 1;
     }
+    PRINTF("in guard");
 
     return 0;
 }
@@ -319,6 +320,7 @@ unsigned char enforce_bip44_coin_type(unsigned char *bip32Path, bool for_pubkey)
         return 1;
     }
     // Everything else needs a user validation
+    PRINTF("IN enforce");
     return 0;
 }
 

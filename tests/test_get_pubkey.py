@@ -7,9 +7,11 @@ def test_get_public_key(cmd):
     # legacy address
     pub_key, addr, bip32_chain_code = cmd.get_public_key(
         addr_type=AddrType.CASHADDR,
-        bip32_path="m/44'/1'/0'/0/0",
+        bip32_path="m/44'/29223'/1'/1/0",
         display=False
     )
+
+    print("address: nexa:" + addr)
 
     assert pub_key == bytes.fromhex("04"
                                     "ee8608207e21028426f69e76447d7e3d5e077049f5e683c3136c2314762a4718"

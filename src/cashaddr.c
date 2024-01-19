@@ -125,19 +125,17 @@ int cashaddr_encode(uint8_t *hash, const size_t hash_length, uint8_t *addr,
     addr_start = addr;
     *addr_start = 0;
 
-    if (hash_length != 20) // Only support 160 bit hash
-        return 0;
-    if (version == CASHADDR_P2PKH) { // Support P2PKH = 0, P2SH = 1
-        version_byte = 0;
-    } else if (version == CASHADDR_P2SH) {
-        version_byte = 8;
-    }
-    else if (version == CASHADDR_P2ST) {
+    // if (hash_length != 20) // Only support 160 bit hash
+    //     return 0;
+    // if (version == CASHADDR_P2PKH) { // Support P2PKH = 0, P2SH = 1
+    //     version_byte = 0;
+    // }
+    // else if (version == CASHADDR_P2ST) {
         version_byte = 19; 
         version_byte = version_byte << 3;
-    } else {
-        return 0;
-    }
+    // } else {
+    //     return 0;
+    // }
 
     // pad out tmp
     tmp[0] = version_byte;
