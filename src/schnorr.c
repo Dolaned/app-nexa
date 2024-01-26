@@ -38,5 +38,17 @@ end:
         // the return code is not checked.
         explicit_bzero(sig, buf_len);
     }
+    if(error == CX_EC_INVALID_CURVE) {
+        PRINTF("Invalid Curve\n");
+    }
+    if(error == CX_INTERNAL_ERROR) {
+        PRINTF("Internal Error\n");
+    }
+    if(error == CX_OVERFLOW) {
+        PRINTF("Internal OVERFLOW\n");
+    }
+    if(error != CX_OK) {
+        PRINTF("Error Other: %u\n", error);
+    }
     return error;
 }

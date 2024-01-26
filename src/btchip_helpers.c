@@ -409,8 +409,9 @@ int btchip_sign_finalhash(unsigned char* path, size_t path_len, unsigned char *i
             in,
             inlen,
             out,
-            outlen) != CX_OK) {
-        return -1;
+            outlen
+        ) != CX_OK) {
+        return -2;
     }
 
     // Store information about the parity of the 'y' coordinate

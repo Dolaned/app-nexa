@@ -267,16 +267,20 @@ unsigned short btchip_compute_hash() {
     }
 
     size_t out_len = 100;
-    btchip_sign_finalhash(
-            btchip_context_D.transactionSummary.keyPath,
-            sizeof(btchip_context_D.transactionSummary.keyPath),
-            hash, sizeof(hash), // IN
-            G_io_apdu_buffer, &out_len,                        // OUT
-            ((N_btchip.bkp.config.options &
-              BTCHIP_OPTION_DETERMINISTIC_SIGNATURE) != 0));
+    int result = btchip_sign_finalhash(
+        btchip_context_D.transactionSummary.keyPath,
+        sizeof(btchip_context_D.transactionSummary.keyPath),
+        hash, sizeof(hash), // IN
+        G_io_apdu_buffer, &out_len,                        // OUT
+        ((N_btchip.bkp.config.options &BTCHIP_OPTION_DETERMINISTIC_SIGNATURE) != 0)
+    );
+    
+    PRINTF("Sign finalhashResult: %d \n", result);
+
     btchip_context_D.outLength = G_io_apdu_buffer[1] + 2;
-            memset(&btchip_context_D.transactionSummary, 0,
-                      sizeof(btchip_transaction_summary_t));
+    
+    PRINTF("Outlength: %u \n", btchip_context_D.outLength);
+    memset(&btchip_context_D.transactionSummary, 0, sizeof(btchip_transaction_summary_t));
     return sw;
 
     discard: 
