@@ -184,7 +184,7 @@ bool handle_output_state() {
     return processed;
 }
 
-// out should be 32 bytes, even only 20 bytes is significant for output
+// out should be 33 bytes, even only 20 bytes is significant for output
 int get_pubkey_hash160(unsigned char* keyPath, size_t keyPath_len, unsigned char* out) {
     cx_ecfp_public_key_t public_key;
     int keyLength;

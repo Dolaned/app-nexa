@@ -124,14 +124,23 @@ unsigned short btchip_apdu_get_wallet_public_key() {
     
     // Cashaddr
     uint8_t tmp[20];
-    uint8_t buffer[33 + 1];
-    buffer[0] = keyLength;
-    memcpy(buffer + 1, G_io_apdu_buffer + 1, keyLength);
+    uint8_t buffer[33];
+    memcpy(buffer, G_io_apdu_buffer + 1, keyLength);
 
-    PRINTF("keylength:%u", keyLength);
+    PRINTF("\nkeylength:%u \n", keyLength);
+
+    for(int i = 0; i < keyLength; i++) {
+        PRINTF("%02x", buffer[i]);
+    }
+    PRINTF("\n");
+
     btchip_public_key_hash160(buffer, // IN
-                                keyLength + 1,            // INLEN
+                                keyLength,            // INLEN
                                 tmp);
+    for(int i = 0; i < 20; i++) {
+        PRINTF("%02x", tmp[i]);
+    }
+    PRINTF("\n");
     keyLength =
         cashaddr_encode(tmp, 20, G_io_apdu_buffer + 67, 50, CASHADDR_P2ST);
 

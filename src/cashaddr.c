@@ -31,42 +31,27 @@
 
 static const char *charset = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
 
-uint64_t PolyMod(uint8_t *prefix, uint8_t *payload, size_t payload_length)
-{
-    const size_t data_len = payload_length + 5;
-    uint8_t data[data_len];
-    data[0] = 110;
-    data[1] = 101;
-    data[2] = 120;
-    data[3] = 97;
-    data[4] = 0;
-    memcpy(data + 5, payload, payload_length);
+uint64_t cashaddr_polymod_step(uint64_t pre) {
+    uint8_t b = pre >> 35;
+    return ((pre & 0x07ffffffff) << 5) ^ (-((b >> 0) & 1) & 0x98f2bc8e61UL) ^
+           (-((b >> 1) & 1) & 0x79b76d99e2UL) ^
+           (-((b >> 2) & 1) & 0xf33e5fb3c4UL) ^
+           (-((b >> 3) & 1) & 0xae2eabe2a8UL) ^
+           (-((b >> 4) & 1) & 0x1e4f43e470UL);
+}
+
+uint64_t PolyMod(uint8_t *prefix, uint8_t *payload, size_t payload_length) {
     size_t i;
     uint64_t c = 1;
-    for (i = 0; i < data_len; ++i)
-    {
-        uint8_t c0 = c >> 35;
-        c = ((c & 0x07ffffffff) << 5) ^ data[i];
-        if (c0 & 0x01)
-        {
-            c ^= 0x98f2bc8e61;
-        }
-        if (c0 & 0x02)
-        {
-            c ^= 0x79b76d99e2;
-        }
-        if (c0 & 0x04)
-        {
-            c ^= 0xf33e5fb3c4;
-        }
-        if (c0 & 0x08)
-        {
-            c ^= 0xae2eabe2a8;
-        }
-        if (c0 & 0x10)
-        {
-            c ^= 0x1e4f43e470;
-        }
+    while (*prefix != 0) {
+        c = cashaddr_polymod_step(c) ^ (*prefix++ & 0x1f); // Prefix
+    }
+    c = cashaddr_polymod_step(c); // The zero valued separator
+    for (i = 0; i < payload_length; ++i) {
+        c = cashaddr_polymod_step(c) ^ (*payload++); // Hash
+    }
+    for (i = 0; i < 8; ++i) {
+        c = cashaddr_polymod_step(c); // 8 zeros for empty checksum
     }
     return c ^ 1;
 }
@@ -145,13 +130,18 @@ int cashaddr_encode(uint8_t *hash, const size_t hash_length, uint8_t *addr,
     tmp[4] = 0x14;
     memmove(tmp + 5, hash, hash_length);
 
-    PRINTF("tmp=\n%.*H\n", hash_length + 5 , tmp);
+    // PRINTF("tmp=\n%.*H\n", hash_length + 5 , tmp);
 
     convert_bits(payload, &payload_length, 5, tmp, hash_length + 5, 8, 1);
 
-    PRINTF("payload=\n%.*H\n", payload_length , payload);
+    PRINTF("\npayload\n");
+    for(int i = 0; i < payload_length; i++) {
+        PRINTF("%02x", payload[i]);
+    }
+    PRINTF("\n");
+    
 
-    PRINTF("payload_length=%u", payload_length);
+    PRINTF("\npayload_length=%u \n", payload_length);
 
     create_checksum(payload, payload_length,
                     checksum); // Assume prefix is 'nexa'
@@ -167,7 +157,15 @@ int cashaddr_encode(uint8_t *hash, const size_t hash_length, uint8_t *addr,
             return 0;
         }
         *(addr++) = charset[payload[i]];
+        PRINTF("%c", charset[payload[i]]);
     }
+
+    PRINTF("\npayload after loop\n");
+    for(int i = 0; i < addr_length; i++) {
+        PRINTF("%c", addr[i]);
+    }
+    PRINTF("\n");
+    PRINTF("Checksum\n");
     for (i = 0; i < 8; ++i) {
         if (*checksum >> 5) {
             *addr_start = 0;
@@ -179,8 +177,9 @@ int cashaddr_encode(uint8_t *hash, const size_t hash_length, uint8_t *addr,
             return 0;
         }
         *(addr++) = charset[checksum[i]];
+        PRINTF("%c", charset[checksum[i]]);
     }
     *addr = 0;
-
+    PRINTF("\n");
     return addr_length;
 }
