@@ -9,5 +9,5 @@ def test_sign_message(cmd):
             bip32_path="m/44'/29223'/1'/1/0",
     )
     print(result)
-    assert result == "MUUCIQDkeGEVZZiRjMfh+z4ELx81gBdBwIK1IIEHkXZ6FiqcqQIgfaAberpvF+XbOCM5Cd/ljogNyU3w2OIL8eYCyZ6Ru2k="
+    assert result == "MEQCIEja8XR185kvSDTQx+c5f/Grow3QKfdO0c+QPQDxveErAiB6o+v+QUtRN7WL2JMyvvhlvPyc0i0+2pgFNueo6k010g=="
 

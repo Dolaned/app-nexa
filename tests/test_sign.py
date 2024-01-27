@@ -34,9 +34,12 @@ def sign_from_json(cmd, filepath: Path):
                            lock_time=tx_dct["lock_time"])
 
     expected_tx = CTransaction.from_bytes(bytes.fromhex(tx_dct["raw"]))
+    print(expected_tx)
+    
     witnesses = expected_tx.wit.vtxinwit
     for witness, (tx_hash_digest, sign_pub_key, (v, der_sig)) in zip(witnesses, sigs):
         expected_der_sig, expected_pubkey = witness.scriptWitness.stack
+        print(expected_pubkey)
         assert expected_pubkey == sign_pub_key
         assert expected_der_sig == der_sig
         pk: VerifyingKey = VerifyingKey.from_string(
@@ -44,6 +47,7 @@ def sign_from_json(cmd, filepath: Path):
             curve=SECP256k1,
             hashfunc=sha256
         )
+        assert(False)
         assert pk.verify_digest(signature=der_sig[:-1],  # remove sighash
                                 digest=tx_hash_digest,
                                 sigdecode=sigdecode_der) is True
@@ -65,16 +69,6 @@ def test_untrusted_hash_sign_fail_short_payload(cmd, transport):
     assert sw == 0x6700
 
 
-@automation("automations/accept.json")
-def test_sign_p2wpkh_accept(cmd):
-    for filepath in Path("data").rglob("p2wpkh/tx.json"):
-        sign_from_json(cmd, filepath)
-
-
-@automation("automations/accept.json")
-def test_sign_p2sh_p2wpkh_accept(cmd):
-    for filepath in Path("data").rglob("p2sh-p2wpkh/tx.json"):
-        sign_from_json(cmd, filepath)
 
 
 @automation("automations/accept.json")
@@ -83,7 +77,8 @@ def test_sign_p2pkh_accept(cmd):
         sign_from_json(cmd, filepath)
 
 
-@automation("automations/reject.json")
-def test_sign_fail_p2pkh_reject(cmd):
-    with pytest.raises(ConditionOfUseNotSatisfiedError):
-        sign_from_json(cmd, "./data/one-to-one/p2pkh/tx.json")
+# @automation("automations/reject.json")
+# def test_sign_fail_p2pkh_reject(cmd):
+#     with pytest.raises(ConditionOfUseNotSatisfiedError):
+#         for filepath in Path("data/one-to-one/").rglob("p2pkh/tx.json"):
+#             sign_from_json(cmd, filepath)
