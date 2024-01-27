@@ -400,11 +400,49 @@ int btchip_sign_finalhash(unsigned char* path, size_t path_len, unsigned char *i
         return -1;
     }
 
-    if (bip32_derive_schnorr_sign_hash_256(
+    if (bip32_derive_ecdsa_sign_hash_256(
             CX_CURVE_SECP256K1,
             bip32Path.path,
             bip32Path.length,
             CX_LAST | (rfc6979 ? CX_RND_RFC6979 : CX_RND_TRNG),
+            CX_SHA256,
+            in,
+            inlen,
+            out,
+            outlen,
+            info
+        ) != CX_OK) {
+        return -2;
+    }
+
+    // Store information about the parity of the 'y' coordinate
+    if (info & CX_ECCINFO_PARITY_ODD) {
+        out[0] |= 0x01;
+    }
+
+    io_seproxyhal_io_heartbeat();
+    return 0;
+}
+
+int btchip_sign_schnorr_finalhash(unsigned char* path, size_t path_len, unsigned char *in, unsigned short inlen,
+                                 unsigned char *out, size_t* outlen) {
+
+    unsigned int info = 0;
+
+    io_seproxyhal_io_heartbeat();
+
+    bip32_path_t bip32Path;
+    bip32Path.length = path[0];
+
+    if (!parse_serialized_path(&bip32Path, path, path_len)) {
+        return -1;
+    }
+
+    if (bip32_derive_schnorr_sign_hash_256(
+            CX_CURVE_SECP256K1,
+            bip32Path.path,
+            bip32Path.length,
+            CX_ECSCHNORR_LIBSECP,
             CX_SHA256,
             in,
             inlen,

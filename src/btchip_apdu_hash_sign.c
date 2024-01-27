@@ -137,7 +137,7 @@ void btchip_bagl_user_action_signtx(unsigned char confirming, unsigned char dire
         
         // Sign
         size_t out_len = sizeof(G_io_apdu_buffer);
-        btchip_sign_finalhash(
+        btchip_sign_schnorr_finalhash(
             btchip_context_D.transactionSummary.keyPath,
             sizeof(btchip_context_D.transactionSummary.keyPath),
             hash, sizeof(hash),
