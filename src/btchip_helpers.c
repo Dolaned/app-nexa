@@ -392,7 +392,7 @@ int btchip_sign_finalhash(unsigned char* path, size_t path_len, unsigned char *i
     unsigned int info = 0;
 
     io_seproxyhal_io_heartbeat();
-
+    
     bip32_path_t bip32Path;
     bip32Path.length = path[0];
 
@@ -402,23 +402,22 @@ int btchip_sign_finalhash(unsigned char* path, size_t path_len, unsigned char *i
 
     if (bip32_derive_ecdsa_sign_hash_256(
             CX_CURVE_SECP256K1,
-            bip32Path.path,
+            bip32Path.path, 
             bip32Path.length,
-            CX_LAST | (rfc6979 ? CX_RND_RFC6979 : CX_RND_TRNG),
+            CX_LAST | (rfc6979 ? CX_RND_RFC6979 : CX_RND_TRNG), 
             CX_SHA256,
-            in,
-            inlen,
-            out,
+            in, 
+            inlen, 
+            out, 
             outlen,
-            info
-        ) != CX_OK) {
-        return -2;
+            &info) != CX_OK) {
+        return -1;
     }
 
     // Store information about the parity of the 'y' coordinate
-    if (info & CX_ECCINFO_PARITY_ODD) {
-        out[0] |= 0x01;
-    }
+    // if (info & CX_ECCINFO_PARITY_ODD) {
+    //     out[0] |= 0x01;
+    // }
 
     io_seproxyhal_io_heartbeat();
     return 0;

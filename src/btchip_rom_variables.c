@@ -40,7 +40,7 @@ unsigned char const BASE58ALPHABET[] = {
     'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'm',
     'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
 
-unsigned char const SIGNMAGIC[] = {' ', 'S', 'i', 'g', 'n', 'e', 'd', ' ', 'M',
+unsigned char const SIGNMAGIC[] = {'B', 'i', 't', 'c', 'o', 'i', 'n', ' ', 'S', 'i', 'g', 'n', 'e', 'd', ' ', 'M',
                                    'e', 's', 's', 'a', 'g', 'e', ':', '\n'};
 
 unsigned char const TWOPOWER[] = {0x01, 0x02, 0x04, 0x08,

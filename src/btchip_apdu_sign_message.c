@@ -125,18 +125,14 @@ unsigned short btchip_apdu_sign_message_internal() {
                 sw = SW_TECHNICAL_DETAILS(0x0F);
                 goto discard;
             }
-            chunkLength =
-                strlen(G_coin_config->coinid) + SIGNMAGIC_LENGTH;
+
+
+            chunkLength = SIGNMAGIC_LENGTH;
             if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0,
                         &chunkLength, 1, NULL, 0)) {
                 goto discard;
             }
-            if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0,
-                        (uint8_t *)G_coin_config->coinid,
-                        strlen(G_coin_config->coinid), NULL, 0)) {
-                sw = SW_TECHNICAL_DETAILS(0x0F);
-                goto discard;
-            }
+
             if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0,
                         (unsigned char *)SIGNMAGIC, SIGNMAGIC_LENGTH, NULL, 0)) {
                 sw = SW_TECHNICAL_DETAILS(0x0F);
@@ -265,6 +261,11 @@ unsigned short btchip_compute_hash() {
     if (cx_hash_sha256(hash, sizeof(hash), hash, 32) == 0) {
         goto discard;
     }
+    PRINTF("Hash: \n");
+    for(int i = 0; i < sizeof(hash); i++) {
+        PRINTF("%02x", hash[i]);
+    }
+    PRINTF("\n");
 
     size_t out_len = 100;
     int result = btchip_sign_finalhash(

@@ -20,7 +20,7 @@
 
 #include "btchip_internal.h"
 
-#define SIGNMAGIC_LENGTH 17
+#define SIGNMAGIC_LENGTH 24
 
 extern unsigned char const HEXDIGITS[16];
 extern unsigned char const BASE58TABLE[128];
