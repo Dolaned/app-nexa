@@ -30,13 +30,9 @@ int get_public_key_chain_code(unsigned char* keyPath, size_t keyPath_len, bool u
     if (btchip_get_public_key(keyPath, keyPath_len, public_key, chainCode)) {
         return keyLength;
     }
-    // Then encode it
-    if (uncompressedPublicKeys) {
-        keyLength = 65;
-    } else {
-        btchip_compress_public_key_value(public_key);
-        keyLength = 33;
-    }
+
+    btchip_compress_public_key_value(public_key);
+    keyLength = 33;
 
     memmove(publicKey, public_key,
                sizeof(public_key));
@@ -45,8 +41,7 @@ int get_public_key_chain_code(unsigned char* keyPath, size_t keyPath_len, bool u
 
 unsigned short btchip_apdu_get_wallet_public_key() {
     unsigned char keyLength;
-    unsigned char uncompressedPublicKeys =
-        ((N_btchip.bkp.config.options & BTCHIP_OPTION_UNCOMPRESSED_KEYS) != 0);
+    unsigned char uncompressedPublicKeys = 0;
     uint32_t request_token;
     unsigned char chainCode[32];
     uint8_t is_derivation_path_unusual = 0;
@@ -115,7 +110,7 @@ unsigned short btchip_apdu_get_wallet_public_key() {
     unsigned char bip44_enforced = enforce_bip44_coin_type(G_io_apdu_buffer + ISO_OFFSET_CDATA, true);
 
     G_io_apdu_buffer[0] = 65;
-    keyLength = get_public_key_chain_code(G_io_apdu_buffer + ISO_OFFSET_CDATA, MAX_BIP32_PATH_LENGTH, uncompressedPublicKeys, G_io_apdu_buffer + 1, chainCode);
+    keyLength = get_public_key_chain_code(G_io_apdu_buffer + ISO_OFFSET_CDATA, MAX_BIP32_PATH_LENGTH, false, G_io_apdu_buffer + 1, chainCode);
 
     if (keyLength == 0)
     {
@@ -124,8 +119,10 @@ unsigned short btchip_apdu_get_wallet_public_key() {
     
     // Cashaddr
     uint8_t tmp[20];
-    uint8_t buffer[33];
-    memcpy(buffer, G_io_apdu_buffer + 1, keyLength);
+    uint8_t buffer[34];
+    memcpy(buffer+1, G_io_apdu_buffer + 1, keyLength);
+
+    buffer[0] = 33;
 
     PRINTF("\nkeylength:%u \n", keyLength);
 
@@ -134,8 +131,8 @@ unsigned short btchip_apdu_get_wallet_public_key() {
     }
     PRINTF("\n");
 
-    btchip_public_key_hash160(buffer, // IN
-                                keyLength,            // INLEN
+btchip_public_key_hash160(buffer, // IN
+                                keyLength + 1,            // INLEN
                                 tmp);
     for(int i = 0; i < 20; i++) {
         PRINTF("%02x", tmp[i]);

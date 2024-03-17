@@ -98,6 +98,7 @@ unsigned short btchip_apdu_sign_message_internal() {
             memmove(
                     btchip_context_D.transactionSummary.keyPath,
                     G_io_apdu_buffer + offset, MAX_BIP32_PATH_LENGTH);
+            PRINTF("KeyPath: %x\n", btchip_context_D.transactionSummary.keyPath);
             offset += (4 * G_io_apdu_buffer[offset]) + 1;
             if (p2 == P2_LEGACY) {
                 btchip_context_D.transactionSummary.messageLength =

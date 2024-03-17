@@ -399,7 +399,6 @@ int btchip_sign_finalhash(unsigned char* path, size_t path_len, unsigned char *i
     if (!parse_serialized_path(&bip32Path, path, path_len)) {
         return -1;
     }
-
     if (bip32_derive_ecdsa_sign_hash_256(
             CX_CURVE_SECP256K1,
             bip32Path.path, 
@@ -414,10 +413,18 @@ int btchip_sign_finalhash(unsigned char* path, size_t path_len, unsigned char *i
         return -1;
     }
 
+
+
     // Store information about the parity of the 'y' coordinate
-    // if (info & CX_ECCINFO_PARITY_ODD) {
-    //     out[0] |= 0x01;
-    // }
+    if (info & CX_ECCINFO_PARITY_ODD) {
+        out[0] |= 0x01;
+    }
+    PRINTF("OutBytes: \n");
+    PRINTF("OUTLENGTH: %lu", *outlen);
+    for(int i = 0; i < *outlen; i++) {
+        PRINTF("%02x", out[i]);
+    }
+    PRINTF("\n");
 
     io_seproxyhal_io_heartbeat();
     return 0;
