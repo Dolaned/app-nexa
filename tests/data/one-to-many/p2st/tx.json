@@ -1,64 +1,20 @@
 {
-  "in_txpool": false,
-  "in_orphanpool": false,
-  "txid": "2d03e43c1eedc4159309b051aafcdb2baaeaac54d365a7eb8fd8bbac36bd43f1",
-  "txidem": "719f3a4b11175d1896b54628250f8006e87aa7b9f5473d3992e0c8cb012dbcc3",
-  "size": 219,
-  "version": 0,
-  "locktime": 493967,
-  "spends": 54398.2,
-  "sends": 54393.82,
-  "fee": 4.38,
-  "vin": [
+    "txid": "2d03e43c1eedc4159309b051aafcdb2baaeaac54d365a7eb8fd8bbac36bd43f1",
+    "raw": "00010060066166e8aa5102b5d2ab3fa91225df759ce584cfcc4409d8c48f7d6c82a4ab64222103e6cfe9c1b241350c7754370a3d8c81eb7bf1fc6113ae088c3e3beec9bf864284404ba300eee89bba23c70e8c8c3395a92e74fa019a14f4ceb1f9518ed923f879f7109ae5e4e5b5c1591d2acfe261e6442c87da8eeb3d52a26f12fe554f954f1243feffffff4c0153000000000002012202000000000000170051146941a7d3cb32b84b42c7959b224feb98d46033450174fd520000000000170051149cdd01d51fefe0f397b992a23018fbab6282fc428f890700",
+    "amount": 54393.82,
+    "fees": 4.38,
+    "to": "nqtsq5g5nnwsr4glals089aej23rqx8m4d3g9lzzz9ejwxmr",
+    "sign_paths": ["m/44'/29223'/1'/1/0"],
+    "change_path": "m/44'/29223'/1'/1/0",
+    "lock_time": 493967,
+    "utxos": [
       {
-          "outpoint": "aba4826c7d8fc4d80944cccf84e59c75df2512a93fabd2b50251aae866610660",
-          "amount": 54398.2,
-          "scriptSig": {
-              "asm": "2103e6cfe9c1b241350c7754370a3d8c81eb7bf1fc6113ae088c3e3beec9bf864284 4ba300eee89bba23c70e8c8c3395a92e74fa019a14f4ceb1f9518ed923f879f7109ae5e4e5b5c1591d2acfe261e6442c87da8eeb3d52a26f12fe554f954f1243[ALL]",
-              "hex": "222103e6cfe9c1b241350c7754370a3d8c81eb7bf1fc6113ae088c3e3beec9bf864284404ba300eee89bba23c70e8c8c3395a92e74fa019a14f4ceb1f9518ed923f879f7109ae5e4e5b5c1591d2acfe261e6442c87da8eeb3d52a26f12fe554f954f1243"
-          },
-          "sequence": 4294967294
+        "txid": "347efbd10c20a540f677bdf616f06652215497a444a20127dad1520ce2b9f75d",
+        "raw": "0200000001f4c2b478dc9cea2df43c8bb94938ff43f3bed5aeb3af9e36cdb7016104626bf2000000006b483045022100b7b8244b3f83648397fa3c37349ed1827bf40bfca22d4f87cc019d3fded63e1d02205434ce222de35e04ab98be54af57d2c8b464f0da76a0275443b33c7b1df79344012103462f1e48396ce2a4d7694d107fef5123fe4d1e394394a370fa4901e744b4884efdffffff02dcdb0600000000001976a914b242ba04b8526b533b17b168d27eaf0da7bacb8588ac70640800000000001976a91426c680ec6ac9c0ed760177f92096f1c5571b72ef88ac20041d00",
+        "output_indexes": [1],
+        "output_amounts": [550000]
       }
-  ],
-  "vout": [
-      {
-          "value": 5.46,
-          "type": 1,
-          "n": 0,
-          "scriptPubKey": {
-              "asm": "0 1 6941a7d3cb32b84b42c7959b224feb98d4603345",
-              "hex": "0051146941a7d3cb32b84b42c7959b224feb98d4603345",
-              "type": "scripttemplate",
-              "scriptHash": "pay2pubkeytemplate",
-              "argsHash": "6941A7D3CB32B84B42C7959B224FEB98D4603345",
-              "addresses": [
-                  "nexa:nqtsq5g5d9q6057tx2uyksk8jkdjynltnr2xqv69qsrs6sxe"
-              ]
-          },
-          "outpoint": "29fb3a43bd425f826d91310be391ee88e5739515289b989d9f542a017fd99181"
-      },
-      {
-          "value": 54388.36,
-          "type": 1,
-          "n": 1,
-          "scriptPubKey": {
-              "asm": "0 1 9cdd01d51fefe0f397b992a23018fbab6282fc42",
-              "hex": "0051149cdd01d51fefe0f397b992a23018fbab6282fc42",
-              "type": "scripttemplate",
-              "scriptHash": "pay2pubkeytemplate",
-              "argsHash": "9CDD01D51FEFE0F397B992A23018FBAB6282FC42",
-              "addresses": [
-                  "nexa:nqtsq5g5nnwsr4glals089aej23rqx8m4d3g9lzzz9ejwxmr"
-              ]
-          },
-          "outpoint": "148b4bf87a4b39001e821bf903010335e9b0c64b7e79b7f92db76542d8bf0422"
-      }
-  ],
-  "blockhash": "41978bc23c77a1d0b1a5c3b0ee2aa37fd8b40eac932fb83fedd0a8664d4c4793",
-  "blockindex": 493969,
-  "blocktime": 1710651482,
-  "time": 1710651482,
-  "confirmations": 7,
-  "hex": "00010060066166e8aa5102b5d2ab3fa91225df759ce584cfcc4409d8c48f7d6c82a4ab64222103e6cfe9c1b241350c7754370a3d8c81eb7bf1fc6113ae088c3e3beec9bf864284404ba300eee89bba23c70e8c8c3395a92e74fa019a14f4ceb1f9518ed923f879f7109ae5e4e5b5c1591d2acfe261e6442c87da8eeb3d52a26f12fe554f954f1243feffffff4c0153000000000002012202000000000000170051146941a7d3cb32b84b42c7959b224feb98d46033450174fd520000000000170051149cdd01d51fefe0f397b992a23018fbab6282fc428f890700",
-  "searchByIdem": false
-}
+    ]
+  
+  }
+  
