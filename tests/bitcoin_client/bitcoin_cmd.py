@@ -75,25 +75,28 @@ class BitcoinCommand(BitcoinBaseCommand):
         sign_pub_keys: List[bytes] = []
         for sign_path in sign_paths:
             sign_pub_key, _, _ = self.get_public_key(
-                addr_type=AddrType.BECH32,
+                addr_type=AddrType.CASHADDR,
                 bip32_path=sign_path,
                 display=False
             )
             sign_pub_keys.append(compress_pub_key(sign_pub_key))
 
-        inputs: List[Tuple[CTransaction, bytes]] = [
-            (utxo, self.get_trusted_input(utxo=utxo, output_index=output_index))
-            for utxo, output_index, _ in utxos
-        ]
+        # inputs: List[Tuple[CTransaction, bytes]] = [
+        #     (utxo, self.get_trusted_input(utxo=utxo, output_index=output_index))
+        #     for utxo, output_index, _ in utxos
+        # ]
+
+
 
         # new transaction
         tx: CTransaction = CTransaction()
         tx.nVersion = 2
         tx.nLockTime = lock_time
         # prepare vin
-        for i, (utxo, trusted_input) in enumerate(inputs):
+        for i, utxo in enumerate(utxos):
+            print(utxo)
             if utxo.sha256 is None:
-                utxo.calc_sha256(with_witness=False)
+                utxo.calc_sha256()
 
             _, _, _, prev_txid, output_index, _, _ = deser_trusted_input(trusted_input)
             assert prev_txid != utxo.sha256

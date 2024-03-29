@@ -210,7 +210,7 @@ class BitcoinCommandBuilder:
         p2: int = 0x00
 
         cdata: bytes = (output_index.to_bytes(4, byteorder="big") +
-                        utxo.serialize_without_witness())
+                        utxo.serialize())
 
         for i, (is_last, chunk) in enumerate(chunkify(cdata, MAX_APDU_LEN)):
             p1 = 0x00 if i == 0 else 0x80

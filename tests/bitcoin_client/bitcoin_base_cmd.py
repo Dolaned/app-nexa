@@ -236,6 +236,7 @@ class BitcoinBaseCommand:
         response: bytes = b""
 
         for chunk in self.builder.get_trusted_input(utxo, output_index):
+            print(chunk)
             self.transport.send_raw(chunk)
             sw, response = self.transport.recv()  # type: int, bytes
 
@@ -244,6 +245,7 @@ class BitcoinBaseCommand:
 
         # response = 0x32 (1) || 0x00 (1) || random (2) || prev_txid (32) ||
         #            output_index (4) || amount (8) || HMAC (8)
+            print(response)
         assert len(response) == 56
 
         offset: int = 0
@@ -256,7 +258,7 @@ class BitcoinBaseCommand:
         _: bytes = response[offset:offset + 2]  # random
         offset += 2
         prev_txid: bytes = response[offset:offset + 32]
-        assert prev_txid == hash256(utxo.serialize_without_witness())
+        assert prev_txid == hash256(utxo.serialize())
         offset += 32
         out_index: int = int.from_bytes(response[offset:offset + 4],
                                         byteorder="little")

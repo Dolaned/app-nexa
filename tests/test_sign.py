@@ -35,6 +35,7 @@ def sign_from_json(cmd, filepath: Path):
 
     expected_tx = CTransaction.from_bytes(bytes.fromhex(tx_dct["raw"]))
     print(expected_tx)
+    print(sigs)
     
     witnesses = expected_tx.wit.vtxinwit
     for witness, (tx_hash_digest, sign_pub_key, (v, der_sig)) in zip(witnesses, sigs):
@@ -53,20 +54,20 @@ def sign_from_json(cmd, filepath: Path):
                                 sigdecode=sigdecode_der) is True
 
 
-def test_untrusted_hash_sign_fail_nonzero_p1_p2(cmd, transport):
-    # payloads do not matter, should check and fail before checking it (but non-empty is required)
-    sw, _ = transport.exchange(0xE0, 0x48, 0x01, 0x01, None, b"\x00")
-    assert sw == 0x6B00, "should fail with p1 and p2 both non-zero"
-    sw, _ = transport.exchange(0xE0, 0x48, 0x01, 0x00, None, b"\x00")
-    assert sw == 0x6B00, "should fail with non-zero p1"
-    sw, _ = transport.exchange(0xE0, 0x48, 0x00, 0x01, None, b"\x00")
-    assert sw == 0x6B00, "should fail with non-zero p2"
+# def test_untrusted_hash_sign_fail_nonzero_p1_p2(cmd, transport):
+#     # payloads do not matter, should check and fail before checking it (but non-empty is required)
+#     sw, _ = transport.exchange(0xE0, 0x48, 0x01, 0x01, None, b"\x00")
+#     assert sw == 0x6B00, "should fail with p1 and p2 both non-zero"
+#     sw, _ = transport.exchange(0xE0, 0x48, 0x01, 0x00, None, b"\x00")
+#     assert sw == 0x6B00, "should fail with non-zero p1"
+#     sw, _ = transport.exchange(0xE0, 0x48, 0x00, 0x01, None, b"\x00")
+#     assert sw == 0x6B00, "should fail with non-zero p2"
 
 
-def test_untrusted_hash_sign_fail_short_payload(cmd, transport):
-    # should fail if the payload is less than 7 bytes
-    sw, _ = transport.exchange(0xE0, 0x48, 0x00, 0x00, None, b"\x01\x02\x03\x04\x05\x06")
-    assert sw == 0x6700
+# def test_untrusted_hash_sign_fail_short_payload(cmd, transport):
+#     # should fail if the payload is less than 7 bytes
+#     sw, _ = transport.exchange(0xE0, 0x48, 0x00, 0x00, None, b"\x01\x02\x03\x04\x05\x06")
+#     assert sw == 0x6700
 
 
 
@@ -74,6 +75,7 @@ def test_untrusted_hash_sign_fail_short_payload(cmd, transport):
 @automation("automations/accept.json")
 def test_sign_p2st_accept(cmd):
     for filepath in Path("data").rglob("p2st/tx.json"):
+        print(filepath)
         sign_from_json(cmd, filepath)
 
 

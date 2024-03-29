@@ -225,49 +225,54 @@ MSG_WITNESS_FLAG = 1 << 30
 
 
 class COutPoint(object):
-    def __init__(self, h: int = 0, n: int = 0xffffffff):
+    def __init__(self, h: int = 0):
         self.hash = h
-        self.n = n
 
     def deserialize(self, f: Readable) -> None:
         self.hash = deser_uint256(f)
-        self.n = struct.unpack("<I", f.read(4))[0]
 
     def serialize(self) -> bytes:
         r = b""
         r += ser_uint256(self.hash)
-        r += struct.pack("<I", self.n)
         return r
 
     def __repr__(self) -> str:
-        return "COutPoint(hash=%064x n=%i)" % (self.hash, self.n)
+        return "COutPoint(hash=%064x)" % (self.hash)
 
 
 class CTxIn(object):
     def __init__(
         self,
+        inputType: int = 0,
         outpoint: Optional[COutPoint] = None,
         scriptSig: bytes = b"",
         nSequence: int = 0,
+        amount: int = 0
     ):
+        self.inputType = inputType
         if outpoint is None:
             self.prevout = COutPoint()
         else:
             self.prevout = outpoint
         self.scriptSig = scriptSig
         self.nSequence = nSequence
+        self.amount = amount
 
     def deserialize(self, f: Readable) -> None:
+        self.inputType = struct.unpack("c", f.read(1))[0]
         self.prevout = COutPoint()
         self.prevout.deserialize(f)
         self.scriptSig = deser_string(f)
         self.nSequence = struct.unpack("<I", f.read(4))[0]
+        self.amount = struct.unpack("<q", f.read(8))[0]
 
     def serialize(self) -> bytes:
         r = b""
+        r += struct.pack("c", self.inputType)
         r += self.prevout.serialize()
         r += ser_string(self.scriptSig)
         r += struct.pack("<I", self.nSequence)
+        r += struct.pack("<q", self.amount)
         return r
 
     def __repr__(self) -> str:
@@ -421,10 +426,9 @@ class CTxWitness(object):
 class CTransaction(object):
     def __init__(self, tx: Optional['CTransaction'] = None) -> None:
         if tx is None:
-            self.nVersion = 1
+            self.nVersion = 0
             self.vin: List[CTxIn] = []
             self.vout: List[CTxOut] = []
-            self.wit = CTxWitness()
             self.nLockTime = 0
             self.sha256: Optional[int] = None
             self.hash: Optional[str] = None
@@ -435,62 +439,24 @@ class CTransaction(object):
             self.nLockTime = tx.nLockTime
             self.sha256 = tx.sha256
             self.hash = tx.hash
-            self.wit = copy.deepcopy(tx.wit)
 
     def deserialize(self, f: Readable) -> None:
-        self.nVersion = struct.unpack("<i", f.read(4))[0]
+        self.nVersion = struct.unpack("c", f.read(1))[0]
         self.vin = deser_vector(f, CTxIn)
-        flags = 0
-        if len(self.vin) == 0:
-            flags = struct.unpack("<B", f.read(1))[0]
-            # Not sure why flags can't be zero, but this
-            # matches the implementation in bitcoind
-            if flags != 0:
-                self.vin = deser_vector(f, CTxIn)
-                self.vout = deser_vector(f, CTxOut)
-        else:
-            self.vout = deser_vector(f, CTxOut)
-        if flags != 0:
-            self.wit.vtxinwit = [CTxInWitness() for _ in range(len(self.vin))]
-            self.wit.deserialize(f)
+        self.vout = deser_vector(f, CTxOut)
         self.nLockTime = struct.unpack("<I", f.read(4))[0]
         self.sha256 = None
         self.hash = None
 
-    def serialize_without_witness(self) -> bytes:
-        r = b""
-        r += struct.pack("<i", self.nVersion)
-        r += ser_vector(self.vin)
-        r += ser_vector(self.vout)
-        r += struct.pack("<I", self.nLockTime)
-        return r
-
-    # Only serialize with witness when explicitly called for
-    def serialize_with_witness(self) -> bytes:
-        flags = 0
-        if not self.wit.is_null():
-            flags |= 1
-        r = b""
-        r += struct.pack("<i", self.nVersion)
-        if flags:
-            r += ser_vector([])
-            r += struct.pack("<B", flags)
-        r += ser_vector(self.vin)
-        r += ser_vector(self.vout)
-        if flags & 1:
-            if len(self.wit.vtxinwit) != len(self.vin):
-                # vtxinwit must have the same length as vin
-                self.wit.vtxinwit = self.wit.vtxinwit[:len(self.vin)]
-                for _ in range(len(self.wit.vtxinwit), len(self.vin)):
-                    self.wit.vtxinwit.append(CTxInWitness())
-            r += self.wit.serialize()
-        r += struct.pack("<I", self.nLockTime)
-        return r
-
     # Regular serialization is without witness -- must explicitly
     # call serialize_with_witness to include witness data.
     def serialize(self) -> bytes:
-        return self.serialize_without_witness()
+        r = b""
+        r += struct.pack("c", self.nVersion)
+        r += ser_vector(self.vin)
+        r += ser_vector(self.vout)
+        r += struct.pack("<I", self.nLockTime)
+        return r
 
     # Recalculate the txid (transaction hash without witness)
     def rehash(self) -> None:
@@ -499,13 +465,9 @@ class CTransaction(object):
 
     # We will only cache the serialization without witness in
     # self.sha256 and self.hash -- those are expected to be the txid.
-    def calc_sha256(self, with_witness: bool = False) -> Optional[int]:
-        if with_witness:
-            # Don't cache the result, just return it
-            return uint256_from_str(hash256(self.serialize_with_witness()))
-
+    def calc_sha256(self) -> Optional[int]:
         if self.sha256 is None:
-            self.sha256 = uint256_from_str(hash256(self.serialize_without_witness()))
+            self.sha256 = uint256_from_str(hash256(self.serialize()))
         self.hash = hash256(self.serialize())[::-1].hex()
         return None
 
@@ -520,5 +482,5 @@ class CTransaction(object):
         return tx
 
     def __repr__(self) -> str:
-        return "CTransaction(nVersion=%i vin=%s vout=%s wit=%s nLockTime=%i)" \
-            % (self.nVersion, repr(self.vin), repr(self.vout), repr(self.wit), self.nLockTime)
+        return "CTransaction(nVersion=%i vin=%s vout=%s nLockTime=%i)" \
+            % (self.nVersion, repr(self.vin), repr(self.vout), self.nLockTime)
