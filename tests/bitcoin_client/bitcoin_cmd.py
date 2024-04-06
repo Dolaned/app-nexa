@@ -1,9 +1,10 @@
 from typing import Tuple, List
 
 from ledgercomm import Transport
-
+from bitcoin_client.hwi.cashaddr import decode as cash_addr_decode
+from bitcoin_client.hwi.cashaddr import encode as cash_addr_encode
 from bitcoin_client.hwi.serialization import (CTransaction, CTxIn, CTxOut, COutPoint,
-                                              is_witness, is_p2wpkh, is_p2pkh, is_p2sh, hash160)
+                                              is_witness, is_p2wpkh, is_p2pkh, is_p2sh, hash160, is_p2st)
 from bitcoin_client.hwi.bech32 import decode as bech32_decode
 from bitcoin_client.hwi.base58 import decode as base58_decode
 from bitcoin_client.utils import deser_trusted_input
@@ -90,42 +91,46 @@ class BitcoinCommand(BitcoinBaseCommand):
 
         # new transaction
         tx: CTransaction = CTransaction()
-        tx.nVersion = 2
+        tx.nVersion = 0
         tx.nLockTime = lock_time
+        inputs = []
         # prepare vin
-        for i, utxo in enumerate(utxos):
+        for i, utxo_tuple in enumerate(utxos):
+            utxo = utxo_tuple[0]
+            output_index = utxo_tuple[1]
+            amount = utxo_tuple[2]
+            print("UTXO Below \n")
             print(utxo)
-            if utxo.sha256 is None:
-                utxo.calc_sha256()
+            print("UTXO Above \n")
 
-            _, _, _, prev_txid, output_index, _, _ = deser_trusted_input(trusted_input)
-            assert prev_txid != utxo.sha256
+
+            # assert prev_txid != utxo.sha256
 
             script_pub_key: bytes = utxo.vout[output_index].scriptPubKey
-            # P2WPKH
-            if is_p2wpkh(script_pub_key):
-                _, _, wit_prog = is_witness(script_pub_key)
-                script_pub_key = (b"\x76" +  # OP_DUP
-                                  b"\xa9" +  # OP_HASH160
-                                  b"\x14" +  # bytes to push (20)
-                                  wit_prog +  # hash160(pubkey)
-                                  b"\x88" +  # OP_EQUALVERIFY
-                                  b"\xac")  # OP_CHECKSIG
-            # P2SH-P2WPKH or P2PKH
-            if (is_p2sh(script_pub_key) and not utxo.wit.is_null()) or is_p2pkh(script_pub_key):
+            # P2ST or P2PKH
+            if is_p2pkh(script_pub_key):
                 script_pub_key = (b"\x76" +  # OP_DUP
                                   b"\xa9" +  # OP_HASH160
                                   b"\x14" +  # bytes to push (20)
                                   hash160(sign_pub_keys[i]) +  # hash160(pubkey)
                                   b"\x88" +  # OP_EQUALVERIFY
                                   b"\xac")  # OP_CHECKSIG
-            tx.vin.append(CTxIn(outpoint=COutPoint(h=utxo.sha256, n=output_index),
+                
+            elif is_p2st(script_pub_key):
+                script_pub_key = (b"\x00" +  # OP_DUP
+                    b"\x51" +  # OP_HASH160
+                    b"\x14" +  # bytes to push (20)
+                    hash160(sign_pub_keys[i]))  # hash160(pubkey)
+                    
+            tx.vin.append(CTxIn(outpoint=COutPoint(h=utxo.calcIdem()),
                                 scriptSig=script_pub_key,
                                 nSequence=0xfffffffd))
+            
+            inputs.append({0, utxo.calcIdem(), amount})
 
         if amount_available - fees > amount:
             change_pub_key, _, _ = self.get_public_key(
-                addr_type=AddrType.BECH32,
+                addr_type=AddrType.CASHADDR,
                 bip32_path=change_path,
                 display=False
             )
@@ -157,31 +162,19 @@ class BitcoinCommand(BitcoinBaseCommand):
             )
 
         script_pub_key: bytes
-        # Bech32 pubkey hash or script hash (mainnet and testnet)
-        if address.startswith("bc1") or address.startswith("tb1"):
-            witness_version, witness_program = bech32_decode(address[0:2], address)
-            script_pub_key = bytes(
-                [witness_version + 0x50 if witness_version else 0,
-                 len(witness_program)] +
-                witness_program
-            )
-        # P2SH address (mainnet and testnet)
-        elif address.startswith("3") or address.startswith("2"):
-            script_pub_key = (b"\xa9" +  # OP_HASH160
-                              b"\x14" +  # bytes to push (20)
-                              base58_decode(address)[1:-4] +  # hash160(redeem_script)
-                              b"\x87")  # OP_EQUAL
         # P2PKH address (mainnet and testnet)
-        elif address.startswith("1") or (address.startswith("m") or address.startswith("n")):
+        if address.startswith("q"):
             script_pub_key = (b"\x76" +  # OP_DUP
                               b"\xa9" +  # OP_HASH160
                               b"\x14" +  # bytes to push (20)
                               base58_decode(address)[1:-4] +  # hash160(pubkey)
                               b"\x88" +  # OP_EQUALVERIFY
                               b"\xac")  # OP_CHECKSIG
+        elif address.startswith("n"):
+            script_pub_key = cash_addr_decode(address)[2]
         else:
             raise Exception(f"Unsupported address: '{address}'")
-
+        
         tx.vout.append(CTxOut(nValue=amount,
                               scriptPubKey=script_pub_key))
 
@@ -202,7 +195,7 @@ class BitcoinCommand(BitcoinBaseCommand):
                                                input_index=0,
                                                script=tx.vin[i].scriptSig,
                                                is_new_transaction=False)
-            _, _, amount = utxos[i]
+            _, _, amount = inputs[i]
             sigs.append(
                 (bip143_digest(tx, amount, i),
                  sign_pub_keys[i],

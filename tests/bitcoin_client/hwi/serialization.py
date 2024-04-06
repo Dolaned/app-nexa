@@ -33,6 +33,10 @@ from typing import (
 )
 from typing_extensions import Protocol
 
+SER_DEFAULT = 0
+SER_ID = 0
+SER_IDEM = 1
+
 
 class Readable(Protocol):
     def read(self, n: int = -1) -> bytes:
@@ -136,10 +140,18 @@ def deser_vector(f: Readable, c: Callable[[], D]) -> List[D]:
     return r
 
 
-def ser_vector(v: Sequence[Serializable]) -> bytes:
-    r = ser_compact_size(len(v))
-    for i in v:
-        r += i.serialize()
+def ser_vector(l, stype=SER_ID):
+    r = b""
+    if len(l) < 253:
+        r = struct.pack("B", len(l))
+    elif len(l) < 0x10000:
+        r = struct.pack("<BH", 253, len(l))
+    elif len(l) < 0x100000000:
+        r = struct.pack("<BI", 254, len(l))
+    else:
+        r = struct.pack("<BQ", 255, len(l))
+    for i in l:
+        r += i.serialize(stype)
     return r
 
 
@@ -259,21 +271,22 @@ class CTxIn(object):
         self.amount = amount
 
     def deserialize(self, f: Readable) -> None:
-        self.inputType = struct.unpack("c", f.read(1))[0]
+        self.inputType = struct.unpack("B", f.read(1))[0]
         self.prevout = COutPoint()
         self.prevout.deserialize(f)
         self.scriptSig = deser_string(f)
         self.nSequence = struct.unpack("<I", f.read(4))[0]
         self.amount = struct.unpack("<q", f.read(8))[0]
 
-    def serialize(self) -> bytes:
-        r = b""
-        r += struct.pack("c", self.inputType)
-        r += self.prevout.serialize()
-        r += ser_string(self.scriptSig)
-        r += struct.pack("<I", self.nSequence)
-        r += struct.pack("<q", self.amount)
-        return r
+    def serialize(self, stype):
+            r = b""
+            r += struct.pack("<B", self.inputType)
+            r += self.prevout.serialize()
+            if stype != SER_IDEM:
+                r += ser_string(self.scriptSig)
+            r += struct.pack("<I", self.nSequence)
+            r += struct.pack("<q", int(self.amount))
+            return r
 
     def __repr__(self) -> str:
         return "CTxIn(prevout=%s scriptSig=%s nSequence=%i)" \
@@ -284,6 +297,8 @@ class CTxIn(object):
 def is_p2sh(script: bytes) -> bool:
     return len(script) == 23 and script[0] == 0xa9 and script[1] == 0x14 and script[22] == 0x87
 
+def is_p2st(script: bytes) -> bool:
+    return len(script) == 32 and script[0] == 0x00 and script[1] == 0x51 and script[2] == 0x14
 
 def is_p2pkh(script: bytes) -> bool:
     return (len(script) == 25 and
@@ -332,25 +347,30 @@ def is_p2wsh(script: bytes) -> bool:
 
 
 class CTxOut(object):
-    def __init__(self, nValue: int = 0, scriptPubKey: bytes = b""):
+    def __init__(self,nType: int = 1, nValue: int = 0, scriptPubKey: bytes = b""):
+        self.nType = nType
         self.nValue = nValue
         self.scriptPubKey = scriptPubKey
 
     def deserialize(self, f: Readable) -> None:
+        self.nType  = struct.unpack("B", f.read(1))[0]
         self.nValue = struct.unpack("<q", f.read(8))[0]
         self.scriptPubKey = deser_string(f)
 
-    def serialize(self) -> bytes:
-        r = b""
-        r += struct.pack("<q", self.nValue)
-        r += ser_string(self.scriptPubKey)
-        return r
+    def serialize(self, serType=SER_DEFAULT):
+            r =  struct.pack("<B", self.nType)
+            r += struct.pack("<q", int(self.nValue))
+            r += ser_string(self.scriptPubKey)
+            return r
 
     def is_p2sh(self) -> bool:
         return is_p2sh(self.scriptPubKey)
 
     def is_p2pkh(self) -> bool:
         return is_p2pkh(self.scriptPubKey)
+    
+    def is_p2st(self) -> bool:
+        return is_p2st(self.scriptPubKey)
 
     def is_p2pk(self) -> bool:
         return is_p2pk(self.scriptPubKey)
@@ -359,69 +379,8 @@ class CTxOut(object):
         return is_witness(self.scriptPubKey)
 
     def __repr__(self) -> str:
-        return "CTxOut(nValue=%i.%08i scriptPubKey=%s)" \
-            % (self.nValue, self.nValue, self.scriptPubKey.hex())
-
-
-class CScriptWitness(object):
-    def __init__(self) -> None:
-        # stack is a vector of strings
-        self.stack: List[bytes] = []
-
-    def __repr__(self) -> str:
-        return "CScriptWitness(%s)" % \
-               (",".join([x.hex() for x in self.stack]))
-
-    def is_null(self) -> bool:
-        if self.stack:
-            return False
-        return True
-
-
-class CTxInWitness(object):
-    def __init__(self) -> None:
-        self.scriptWitness = CScriptWitness()
-
-    def deserialize(self, f: Readable) -> None:
-        self.scriptWitness.stack = deser_string_vector(f)
-
-    def serialize(self) -> bytes:
-        return ser_string_vector(self.scriptWitness.stack)
-
-    def __repr__(self) -> str:
-        return repr(self.scriptWitness)
-
-    def is_null(self) -> bool:
-        return self.scriptWitness.is_null()
-
-
-class CTxWitness(object):
-    def __init__(self) -> None:
-        self.vtxinwit: List[CTxInWitness] = []
-
-    def deserialize(self, f: Readable) -> None:
-        for i in range(len(self.vtxinwit)):
-            self.vtxinwit[i].deserialize(f)
-
-    def serialize(self) -> bytes:
-        r = b""
-        # This is different than the usual vector serialization --
-        # we omit the length of the vector, which is required to be
-        # the same length as the transaction's vin vector.
-        for x in self.vtxinwit:
-            r += x.serialize()
-        return r
-
-    def __repr__(self) -> str:
-        return "CTxWitness(%s)" % \
-               (';'.join([repr(x) for x in self.vtxinwit]))
-
-    def is_null(self) -> bool:
-        for x in self.vtxinwit:
-            if not x.is_null():
-                return False
-        return True
-
+        return "CTxOut(nType=%i nValue=%i scriptPubKey=%s)" \
+            % (self.nType, self.nValue, self.scriptPubKey.hex())
 
 class CTransaction(object):
     def __init__(self, tx: Optional['CTransaction'] = None) -> None:
@@ -441,7 +400,7 @@ class CTransaction(object):
             self.hash = tx.hash
 
     def deserialize(self, f: Readable) -> None:
-        self.nVersion = struct.unpack("c", f.read(1))[0]
+        self.nVersion = struct.unpack("B", f.read(1))[0]
         self.vin = deser_vector(f, CTxIn)
         self.vout = deser_vector(f, CTxOut)
         self.nLockTime = struct.unpack("<I", f.read(4))[0]
@@ -450,11 +409,11 @@ class CTransaction(object):
 
     # Regular serialization is without witness -- must explicitly
     # call serialize_with_witness to include witness data.
-    def serialize(self) -> bytes:
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
-        r += struct.pack("c", self.nVersion)
-        r += ser_vector(self.vin)
-        r += ser_vector(self.vout)
+        r += struct.pack("<B", self.nVersion)
+        r += ser_vector(self.vin, stype)
+        r += ser_vector(self.vout, stype)
         r += struct.pack("<I", self.nLockTime)
         return r
 
@@ -470,6 +429,10 @@ class CTransaction(object):
             self.sha256 = uint256_from_str(hash256(self.serialize()))
         self.hash = hash256(self.serialize())[::-1].hex()
         return None
+    
+    def calcIdem(self):
+        self.idem = hash256(self.serialize(SER_IDEM))
+        return self.idem
 
     def is_null(self) -> bool:
         return len(self.vin) == 0 and len(self.vout) == 0

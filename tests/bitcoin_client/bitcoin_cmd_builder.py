@@ -229,7 +229,7 @@ class BitcoinCommandBuilder:
 
     def untrusted_hash_tx_input_start(self,
                                       tx: CTransaction,
-                                      inputs: List[Tuple[CTransaction, bytes]],
+                                      inputs: List[Tuple[int, bytes, int]],
                                       input_index: int,
                                       script: bytes,
                                       is_new_transaction: bool
@@ -240,7 +240,7 @@ class BitcoinCommandBuilder:
         ----------
         tx: CTransaction
             Serialized Bitcoin transaction to sign.
-        inputs: List[Tuple[CTransaction, bytes]]
+        inputs: List[Tuple[input_type, outpoint_hash, amount]]
             List of inputs with pair of UTXO and trusted input.
         input_index: int
             Index of the input to process.
@@ -262,10 +262,9 @@ class BitcoinCommandBuilder:
         p1: int = 0x00
         # P2:
         # - 0x80, new transaction
-        # - 0x02, new transaction with segwit input
-        p2: int = 0x02 if is_new_transaction else 0x80
+        p2: int = 0x80
 
-        cdata: bytes = (tx.nVersion.to_bytes(4, byteorder="little") +
+        cdata: bytes = (tx.nVersion.to_bytes(1, byteorder="little") +
                         ser_compact_size(len(inputs)))
 
         yield self.serialize(cla=self.CLA,
@@ -275,12 +274,14 @@ class BitcoinCommandBuilder:
                              cdata=cdata)
 
         p1 = 0x80
-        for i, (_, trusted_input) in enumerate(inputs):
+
+        for i, (input_type, outpoint_hash, amount) in enumerate(inputs):
             script_sig: bytes = script if i == input_index else b""
             cdata = b"".join([
-                b"\x01",  # 0x01 for trusted input, 0x02 for witness, 0x00 otherwise
-                len(trusted_input).to_bytes(1, byteorder="big"),
-                trusted_input,
+                b"\x00",  # 0x01 for trusted input, 0x02 for witness, 0x00 otherwise
+                input_type.to_bytes(1, byteorder="big"),
+                len(outpoint_hash).to_bytes(1, byteorder="big"),
+                outpoint_hash,
                 ser_compact_size(len(script_sig))
             ])
 
@@ -295,7 +296,8 @@ class BitcoinCommandBuilder:
                                  p1=p1,
                                  p2=p2,
                                  cdata=(script_sig +
-                                        0xfffffffd.to_bytes(4, byteorder="little")))
+                                        0xfffffffd.to_bytes(4, byteorder="little") + 
+                                        amount.to_bytes(8, byteorder="little")))
 
     def untrusted_hash_tx_input_finalize(self,
                                          tx: CTransaction,

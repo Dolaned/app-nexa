@@ -277,7 +277,7 @@ class BitcoinBaseCommand:
 
     def untrusted_hash_tx_input_start(self,
                                       tx: CTransaction,
-                                      inputs: List[Tuple[CTransaction, bytes]],
+                                      inputs: List[Tuple[int, bytes, int]],
                                       input_index: int,
                                       script: bytes,
                                       is_new_transaction: bool) -> None:
@@ -287,7 +287,7 @@ class BitcoinBaseCommand:
         ----------
         tx : CTransaction
             Serialized Bitcoin transaction to sign.
-        inputs : List[Tuple[CTransaction, bytes]]
+        inputs : List[Tuple[int, bytes, int]]
             List of inputs with pair of UTXO and trusted input.
         input_index : int
             Index of the input to process.
