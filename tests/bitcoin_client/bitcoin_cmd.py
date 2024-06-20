@@ -4,7 +4,7 @@ from ledgercomm import Transport
 from bitcoin_client.hwi.cashaddr import decode as cash_addr_decode
 from bitcoin_client.hwi.cashaddr import encode as cash_addr_encode
 from bitcoin_client.hwi.serialization import (CTransaction, CTxIn, CTxOut, COutPoint,
-                                              is_witness, is_p2wpkh, is_p2pkh, is_p2sh, hash160, is_p2st)
+                                              is_witness, is_p2wpkh, is_p2pkh, is_p2sh, hash160, is_p2st, sha256)
 from bitcoin_client.hwi.bech32 import decode as bech32_decode
 from bitcoin_client.hwi.base58 import decode as base58_decode
 from bitcoin_client.utils import deser_trusted_input
@@ -125,8 +125,12 @@ class BitcoinCommand(BitcoinBaseCommand):
             tx.vin.append(CTxIn(outpoint=COutPoint(h=utxo.calcIdem()),
                                 scriptSig=script_pub_key,
                                 nSequence=0xfffffffd))
-            
-            inputs.append({0, utxo.calcIdem(), amount})
+            bytesArray = bytearray()
+            bytesArray += bytearray(utxo.calcIdem())
+            bytesArray += bytearray(output_index.to_bytes(4, 'little'))
+            shaResult = sha256(bytes(bytesArray))
+            print(shaResult.hex())
+            inputs.append({0, amount, shaResult})
 
         if amount_available - fees > amount:
             change_pub_key, _, _ = self.get_public_key(
@@ -179,6 +183,7 @@ class BitcoinCommand(BitcoinBaseCommand):
                               scriptPubKey=script_pub_key))
 
         for i in range(len(tx.vin)):
+            print("vin loop")
             self.untrusted_hash_tx_input_start(tx=tx,
                                                inputs=inputs,
                                                input_index=i,

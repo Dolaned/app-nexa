@@ -229,7 +229,7 @@ class BitcoinCommandBuilder:
 
     def untrusted_hash_tx_input_start(self,
                                       tx: CTransaction,
-                                      inputs: List[Tuple[int, bytes, int]],
+                                      inputs: List[Tuple[int, int, bytes]],
                                       input_index: int,
                                       script: bytes,
                                       is_new_transaction: bool
@@ -274,17 +274,20 @@ class BitcoinCommandBuilder:
                              cdata=cdata)
 
         p1 = 0x80
-
-        for i, (input_type, outpoint_hash, amount) in enumerate(inputs):
+        print(inputs)
+        for i, (input_type, amount, outpoint_hash) in enumerate(inputs):
+            # print(outpoint_hash)
             script_sig: bytes = script if i == input_index else b""
             cdata = b"".join([
                 b"\x00",  # 0x01 for trusted input, 0x02 for witness, 0x00 otherwise
-                input_type.to_bytes(1, byteorder="big"),
-                len(outpoint_hash).to_bytes(1, byteorder="big"),
+                input_type.to_bytes(1, byteorder="little"),
+                # len(outpoint_hash).to_bytes(1, byteorder="little"),
                 outpoint_hash,
-                ser_compact_size(len(script_sig))
+                # ser_compact_size(len(script_sig))
             ])
-
+            print(outpoint_hash.hex())
+            print(cdata.hex())
+            print(ser_compact_size(len(script_sig)))
             yield self.serialize(cla=self.CLA,
                                  ins=ins,
                                  p1=p1,

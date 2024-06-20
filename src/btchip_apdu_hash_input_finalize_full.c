@@ -222,13 +222,19 @@ unsigned short btchip_apdu_hash_input_finalize_full_internal(
         return BTCHIP_SW_INCORRECT_P1_P2;
     }
 
+    PRINTF("p1: %u \n", p1);
+
     // Check state
     btchip_set_check_internal_structure_integrity(0);
+    PRINTF("Transaction State: %u \n", btchip_context_D.transactionContext.transactionState);
     if (btchip_context_D.transactionContext.transactionState !=
             BTCHIP_TRANSACTION_PRESIGN_READY) {
+        PRINTF("Error1 \n");
         sw = BTCHIP_SW_CONDITIONS_OF_USE_NOT_SATISFIED;
         goto discardTransaction;
     }
+
+    
 
     if (p1 == FINALIZE_P1_CHANGEINFO) {
         if (!btchip_context_D.transactionContext.firstSigned) {
@@ -237,6 +243,7 @@ return_OK:
             return BTCHIP_SW_OK;
         }
         if (!btchip_context_D.tmpCtx.output.changeAccepted) {
+            PRINTF("Error2 \n");
             sw = BTCHIP_SW_CONDITIONS_OF_USE_NOT_SATISFIED;
             goto discardTransaction;
         }
@@ -264,6 +271,7 @@ return_OK:
         if(bip44_derivation_guard(transactionSummary->keyPath, true)) {
             if (btchip_context_D.called_from_swap) {
                 PRINTF("In swap mode only standart path is allowed\n");
+                PRINTF("Error3 \n");
                 sw = BTCHIP_SW_CONDITIONS_OF_USE_NOT_SATISFIED;
                 goto discardTransaction;
             }
@@ -406,6 +414,8 @@ unsigned short btchip_apdu_hash_input_finalize_full() {
     PRINTF("state=%d\n", btchip_context_D.outputParsingState);
     unsigned short sw = btchip_apdu_hash_input_finalize_full_internal(
         &btchip_context_D.transactionSummary);
+        // PRINTF("SW BELOW: \n");
+        PRINTF("SW: %u \n", sw);
     if (btchip_context_D.io_flags & IO_ASYNCH_REPLY) {
         // if the UI reject the processing of the request, then reply
         // immediately
@@ -421,6 +431,7 @@ unsigned short btchip_apdu_hash_input_finalize_full() {
             status = btchip_bagl_confirm_single_output();
         }
         if (!status) {
+            PRINTF("FAILING IN HERE");
             ui_transaction_error();
             btchip_context_D.io_flags &= ~IO_ASYNCH_REPLY;
             btchip_context_D.transactionContext.transactionState =
