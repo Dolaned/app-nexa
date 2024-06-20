@@ -233,9 +233,6 @@ def ser_sig_compact(r: bytes, s: bytes, recid: bytes) -> bytes:
 # Objects that map to bitcoind objects, which can be serialized/deserialized
 
 
-MSG_WITNESS_FLAG = 1 << 30
-
-
 class COutPoint(object):
     def __init__(self, h: int = 0):
         self.hash = h
@@ -293,10 +290,6 @@ class CTxIn(object):
             % (repr(self.prevout), self.scriptSig.hex(),
                self.nSequence)
 
-
-def is_p2sh(script: bytes) -> bool:
-    return len(script) == 23 and script[0] == 0xa9 and script[1] == 0x14 and script[22] == 0x87
-
 def is_p2st(script: bytes) -> bool:
     return len(script) == 32 and script[0] == 0x00 and script[1] == 0x51 and script[2] == 0x14
 
@@ -307,43 +300,6 @@ def is_p2pkh(script: bytes) -> bool:
             script[2] == 0x14 and
             script[23] == 0x88 and
             script[24] == 0xac)
-
-
-def is_p2pk(script: bytes) -> bool:
-    return ((len(script) == 35 or len(script) == 67) and
-            (script[0] == 0x21 or script[0] == 0x41) and
-            script[-1] == 0xac)
-
-
-def is_witness(script: bytes) -> Tuple[bool, int, bytes]:
-    if len(script) < 4 or len(script) > 42:
-        return False, 0, b""
-
-    if script[0] != 0 and (script[0] < 81 or script[0] > 96):
-        return False, 0, b""
-
-    if script[1] + 2 == len(script):
-        return True, script[0] - 0x50 if script[0] else 0, script[2:]
-
-    return False, 0, b""
-
-
-def is_p2wpkh(script: bytes) -> bool:
-    is_wit, wit_ver, wit_prog = is_witness(script)
-    if not is_wit:
-        return False
-    elif wit_ver != 0:
-        return False
-    return len(wit_prog) == 20
-
-
-def is_p2wsh(script: bytes) -> bool:
-    is_wit, wit_ver, wit_prog = is_witness(script)
-    if not is_wit:
-        return False
-    elif wit_ver != 0:
-        return False
-    return len(wit_prog) == 32
 
 
 class CTxOut(object):
@@ -363,24 +319,16 @@ class CTxOut(object):
             r += ser_string(self.scriptPubKey)
             return r
 
-    def is_p2sh(self) -> bool:
-        return is_p2sh(self.scriptPubKey)
-
     def is_p2pkh(self) -> bool:
         return is_p2pkh(self.scriptPubKey)
-    
+
     def is_p2st(self) -> bool:
         return is_p2st(self.scriptPubKey)
-
-    def is_p2pk(self) -> bool:
-        return is_p2pk(self.scriptPubKey)
-
-    def is_witness(self) -> Tuple[bool, int, bytes]:
-        return is_witness(self.scriptPubKey)
 
     def __repr__(self) -> str:
         return "CTxOut(nType=%i nValue=%i scriptPubKey=%s)" \
             % (self.nType, self.nValue, self.scriptPubKey.hex())
+
 
 class CTransaction(object):
     def __init__(self, tx: Optional['CTransaction'] = None) -> None:
@@ -407,8 +355,6 @@ class CTransaction(object):
         self.sha256 = None
         self.hash = None
 
-    # Regular serialization is without witness -- must explicitly
-    # call serialize_with_witness to include witness data.
     def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += struct.pack("<B", self.nVersion)
@@ -417,19 +363,16 @@ class CTransaction(object):
         r += struct.pack("<I", self.nLockTime)
         return r
 
-    # Recalculate the txid (transaction hash without witness)
     def rehash(self) -> None:
         self.sha256 = None
         self.calc_sha256()
 
-    # We will only cache the serialization without witness in
-    # self.sha256 and self.hash -- those are expected to be the txid.
     def calc_sha256(self) -> Optional[int]:
         if self.sha256 is None:
             self.sha256 = uint256_from_str(hash256(self.serialize()))
         self.hash = hash256(self.serialize())[::-1].hex()
         return None
-    
+
     def calcIdem(self):
         self.idem = hash256(self.serialize(SER_IDEM))
         return self.idem

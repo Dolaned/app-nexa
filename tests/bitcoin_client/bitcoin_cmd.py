@@ -4,7 +4,7 @@ from ledgercomm import Transport
 from bitcoin_client.hwi.cashaddr import decode as cash_addr_decode
 from bitcoin_client.hwi.cashaddr import encode as cash_addr_encode
 from bitcoin_client.hwi.serialization import (CTransaction, CTxIn, CTxOut, COutPoint,
-                                              is_witness, is_p2wpkh, is_p2pkh, is_p2sh, hash160, is_p2st, sha256)
+                                              is_p2pkh, hash160, is_p2st, sha256)
 from bitcoin_client.hwi.bech32 import decode as bech32_decode
 from bitcoin_client.hwi.base58 import decode as base58_decode
 from bitcoin_client.utils import deser_trusted_input
@@ -115,13 +115,13 @@ class BitcoinCommand(BitcoinBaseCommand):
                                   hash160(sign_pub_keys[i]) +  # hash160(pubkey)
                                   b"\x88" +  # OP_EQUALVERIFY
                                   b"\xac")  # OP_CHECKSIG
-                
+
             elif is_p2st(script_pub_key):
                 script_pub_key = (b"\x00" +  # OP_DUP
                     b"\x51" +  # OP_HASH160
                     b"\x14" +  # bytes to push (20)
                     hash160(sign_pub_keys[i]))  # hash160(pubkey)
-                    
+
             tx.vin.append(CTxIn(outpoint=COutPoint(h=utxo.calcIdem()),
                                 scriptSig=script_pub_key,
                                 nSequence=0xfffffffd))
@@ -178,7 +178,7 @@ class BitcoinCommand(BitcoinBaseCommand):
             script_pub_key = cash_addr_decode(address)[2]
         else:
             raise Exception(f"Unsupported address: '{address}'")
-        
+
         tx.vout.append(CTxOut(nValue=amount,
                               scriptPubKey=script_pub_key))
 

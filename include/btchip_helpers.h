@@ -28,8 +28,6 @@
 #define OUTPUT_SCRIPT_P2SH_PRE_LENGTH 3
 #define OUTPUT_SCRIPT_P2SH_POST_LENGTH 1
 
-#define OUTPUT_SCRIPT_NATIVE_WITNESS_PROGRAM_OFFSET 3
-
 unsigned char btchip_output_script_is_regular(unsigned char *buffer);
 unsigned char btchip_output_script_is_p2sh(unsigned char *buffer);
 unsigned char btchip_output_script_is_op_return(unsigned char *buffer);
