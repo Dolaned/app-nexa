@@ -266,7 +266,7 @@ class BitcoinCommandBuilder:
 
         cdata: bytes = (tx.nVersion.to_bytes(1, byteorder="little") +
                         ser_compact_size(len(inputs)))
-
+        print("c data len first step" + str(len(cdata)))
         yield self.serialize(cla=self.CLA,
                              ins=ins,
                              p1=p1,
@@ -278,29 +278,35 @@ class BitcoinCommandBuilder:
         for i, (input_type, amount, outpoint_hash) in enumerate(inputs):
             # print(outpoint_hash)
             script_sig: bytes = script if i == input_index else b""
-            cdata = b"".join([
-                b"\x00",  # 0x01 for trusted input, 0x02 for witness, 0x00 otherwise
-                input_type.to_bytes(1, byteorder="little"),
-                # len(outpoint_hash).to_bytes(1, byteorder="little"),
-                outpoint_hash,
-                # ser_compact_size(len(script_sig))
-            ])
-            print(outpoint_hash.hex())
+            # cdata = b"".join([
+            #     b"\x00",  # 0x01 for trusted input, 0x02 for witness, 0x00 otherwise
+            #     input_type.to_bytes(1, byteorder="little"),
+            #     # len(outpoint_hash).to_bytes(1, byteorder="little"),
+            #     outpoint_hash,
+            #     # ser_compact_size(len(script_sig))
+            # ])
+            version = 0 # 0x00 for non segwit
+            cdata = version.to_bytes(2, 'little')
+            cdata = cdata + input_type.to_bytes(1, byteorder="little")
+            cdata = cdata + bytes(outpoint_hash)
+            # print(outpoint_hash.hex())
             print(cdata.hex())
             print(ser_compact_size(len(script_sig)))
+            print("c data input start loop" + str(len(cdata)))
             yield self.serialize(cla=self.CLA,
                                  ins=ins,
                                  p1=p1,
                                  p2=p2,
                                  cdata=cdata)
+            print(script_sig.hex())
+            cdata=(script_sig + 0xfffffffd.to_bytes(4, byteorder="little") + amount.to_bytes(8, byteorder="little"))
+            print("c data input loop script sig" + str(len(cdata)))
 
             yield self.serialize(cla=self.CLA,
                                  ins=ins,
                                  p1=p1,
                                  p2=p2,
-                                 cdata=(script_sig +
-                                        0xfffffffd.to_bytes(4, byteorder="little") + 
-                                        amount.to_bytes(8, byteorder="little")))
+                                 cdata=cdata)
 
     def untrusted_hash_tx_input_finalize(self,
                                          tx: CTransaction,

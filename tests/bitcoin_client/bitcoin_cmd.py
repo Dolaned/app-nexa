@@ -117,7 +117,8 @@ class BitcoinCommand(BitcoinBaseCommand):
                                   b"\xac")  # OP_CHECKSIG
 
             elif is_p2st(script_pub_key):
-                script_pub_key = (b"\x00" +  # OP_DUP
+                script_pub_key = (
+                    b"\x00" +  # OP_DUP
                     b"\x51" +  # OP_HASH160
                     b"\x14" +  # bytes to push (20)
                     hash160(sign_pub_keys[i]))  # hash160(pubkey)
@@ -140,24 +141,21 @@ class BitcoinCommand(BitcoinBaseCommand):
             )
             change_pubkey_hash = hash160(compress_pub_key(change_pub_key))
             change_script_pubkey: bytes
-            # Bech32 pubkey hash or script hash (mainnet and testnet)
-            if address.startswith("bc1") or address.startswith("tb1"):
-                change_script_pubkey = bytes([0, len(change_pubkey_hash)]) + change_pubkey_hash
-            # P2SH-P2WPKH (mainnet and testnet)
-            elif address.startswith("3") or address.startswith("2"):
-                change_script_pubkey = (b"\xa9" +  # OP_HASH160
-                                        b"\x14" +  # bytes to push (20)
-                                        # hash160(redeem_script)
-                                        hash160(bytes([0, len(change_pubkey_hash)]) + change_pubkey_hash) +
-                                        b"\x87")  # OP_EQUAL
-            # P2PKH address (mainnet and testnet)
-            elif address.startswith("1") or (address.startswith("m") or address.startswith("n")):
-                change_script_pubkey = (b"\x76" +  # OP_DUP
-                                        b"\xa9" +  # OP_HASH160
-                                        b"\x14" +  # bytes to push (20)
-                                        change_pubkey_hash +  # hash160(pubkey)
-                                        b"\x88" +  # OP_EQUALVERIFY
-                                        b"\xac")  # OP_CHECKSIG
+            if is_p2pkh(script_pub_key):
+                script_pub_key = (b"\x76" +  # OP_DUP
+                                  b"\xa9" +  # OP_HASH160
+                                  b"\x14" +  # bytes to push (20)
+                                  change_pubkey_hash +  # hash160(pubkey)
+                                  b"\x88" +  # OP_EQUALVERIFY
+                                  b"\xac")  # OP_CHECKSIG
+
+            elif is_p2st(script_pub_key):
+                script_pub_key = (b"\x00" +  # OP_DUP
+                    b"\x51" +  # OP_HASH160
+                    b"\x14" +  # bytes to push (20)
+                    change_pubkey_hash)  # hash160(pubkey)
+                
+
             else:
                 raise Exception(f"Unsupported address: '{address}'")
             tx.vout.append(

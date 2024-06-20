@@ -326,9 +326,12 @@ void transaction_parse(unsigned char parseMode) {
 
                         // Do not include the input script length + value in
                         // the authentication hash
+                        PRINTF("print 328\n");
                         btchip_context_D.transactionHashOption = TRANSACTION_HASH_FULL;
+                        PRINTF("print 330\n");
                     }
                     // Read the script length
+                    PRINTF("Reading Script Length\n");
                     btchip_context_D.transactionContext.scriptRemaining =
                         transaction_get_varint(0);
                     PRINTF("Script to read " DEBUG_LONG "\n",btchip_context_D.transactionContext.scriptRemaining);
@@ -369,10 +372,12 @@ void transaction_parse(unsigned char parseMode) {
                             btchip_context_D.transactionHashOption = TRANSACTION_HASH_BOTH;
                         }
                         // Sequence
+                        PRINTF("CHECKING SEQUENCE\n");
                         check_transaction_available(4);
                         transaction_offset_increase(4, SEQUENCE);
 
                         //amount
+                        PRINTF("CHECKING AMOUNT\n");
                         check_transaction_available(8);
                         transaction_offset_increase(8, INPUTAMOUNTS);
                         // Move to next input
@@ -386,6 +391,7 @@ void transaction_parse(unsigned char parseMode) {
                     }
                     // Save the last script byte for the P2SH check
                     dataAvailable = btchip_context_D.transactionDataRemaining;
+                    PRINTF("Data Available: %u\n", dataAvailable);
                         // (btchip_context_D.transactionDataRemaining >
                         //          btchip_context_D.transactionContext
                         //                  .scriptRemaining -
@@ -400,6 +406,8 @@ void transaction_parse(unsigned char parseMode) {
                     transaction_offset_increase(dataAvailable, 0);
                     btchip_context_D.transactionContext.scriptRemaining -=
                         dataAvailable;
+                    PRINTF("Process input script 2, remaining " DEBUG_LONG "\n",btchip_context_D.transactionContext.scriptRemaining);
+
                     break;
                 }
                 case BTCHIP_TRANSACTION_INPUT_HASHING_DONE: {
