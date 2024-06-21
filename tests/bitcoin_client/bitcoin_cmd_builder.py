@@ -229,7 +229,7 @@ class BitcoinCommandBuilder:
 
     def untrusted_hash_tx_input_start(self,
                                       tx: CTransaction,
-                                      inputs: List[Tuple[int, int, bytes]],
+                                      inputs: List[Tuple[int, bytes, int]],
                                       input_index: int,
                                       script: bytes,
                                       is_new_transaction: bool
@@ -275,7 +275,7 @@ class BitcoinCommandBuilder:
 
         p1 = 0x80
         print(inputs)
-        for i, (input_type, amount, outpoint_hash) in enumerate(inputs):
+        for i, (input_type, outpoint_hash, amount) in enumerate(inputs):
             # print(outpoint_hash)
             script_sig: bytes = script if i == input_index else b""
             cdata = input_type.to_bytes(1, byteorder="little")

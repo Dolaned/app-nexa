@@ -131,7 +131,7 @@ class BitcoinCommand(BitcoinBaseCommand):
             bytesArray += bytearray(output_index.to_bytes(4, 'little'))
             shaResult = sha256(bytes(bytesArray))
             print(shaResult.hex())
-            inputs.append({0, amount, shaResult})
+            inputs.append((0, shaResult, amount))
 
         if amount_available - fees > amount:
             change_pub_key, _, _ = self.get_public_key(
