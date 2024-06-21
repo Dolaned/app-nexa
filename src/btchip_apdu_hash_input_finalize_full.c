@@ -373,7 +373,8 @@ return_OK:
     // transaction, otherwise abort
     // (this is done to keep the transaction counter limit per session
     // synchronized)
-    if (true)
+    //  TODO: FIX THISif (btchip_context_D.transactionContext.firstSigned)
+    if(true)
     {
         memmove(transactionSummary->authorizationHash,
                 authorizationHash,

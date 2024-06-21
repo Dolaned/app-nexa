@@ -82,10 +82,10 @@ class BitcoinCommand(BitcoinBaseCommand):
             )
             sign_pub_keys.append(compress_pub_key(sign_pub_key))
 
-        # inputs: List[Tuple[CTransaction, bytes]] = [
-        #     (utxo, self.get_trusted_input(utxo=utxo, output_index=output_index))
-        #     for utxo, output_index, _ in utxos
-        # ]
+        inputs: List[Tuple[CTransaction, bytes]] = [
+            (utxo, self.get_trusted_input(utxo=utxo, output_index=output_index))
+            for utxo, output_index, _ in utxos
+        ]
 
 
 
@@ -131,7 +131,7 @@ class BitcoinCommand(BitcoinBaseCommand):
             bytesArray += bytearray(output_index.to_bytes(4, 'little'))
             shaResult = sha256(bytes(bytesArray))
             print(shaResult.hex())
-            inputs.append((0, shaResult, amount))
+            inputs.append({0, amount, shaResult})
 
         if amount_available - fees > amount:
             change_pub_key, _, _ = self.get_public_key(
@@ -187,17 +187,19 @@ class BitcoinCommand(BitcoinBaseCommand):
                                                input_index=i,
                                                script=tx.vin[i].scriptSig,
                                                is_new_transaction=(i == 0))
+            
+        print("sign new tx")
 
         self.untrusted_hash_tx_input_finalize(tx=tx,
                                               change_path=change_path)
 
         sigs: List[Tuple[bytes, bytes, Tuple[int, bytes]]] = []
         for i in range(len(tx.vin)):
-            self.untrusted_hash_tx_input_start(tx=tx,
-                                               inputs=[inputs[i]],
-                                               input_index=0,
-                                               script=tx.vin[i].scriptSig,
-                                               is_new_transaction=False)
+            # self.untrusted_hash_tx_input_start(tx=tx,
+            #                                    inputs=[inputs[i]],
+            #                                    input_index=0,
+            #                                    script=tx.vin[i].scriptSig,
+            #                                    is_new_transaction=False)
             _, _, amount = inputs[i]
             sigs.append(
                 (bip143_digest(tx, amount, i),

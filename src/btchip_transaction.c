@@ -416,6 +416,7 @@ void transaction_parse(unsigned char parseMode) {
                         goto ok;
                     }
                     //type
+                    PRINTF("Getting outputs");
                     check_transaction_available(1);
                     memmove(&btchip_context_D.transactionContext.outputType,
                             btchip_context_D.transactionBufferPointer,
