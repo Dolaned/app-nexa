@@ -245,16 +245,16 @@ class COutPoint(object):
 
     def serialize(self) -> bytes:
         r = b""
+        if isinstance(self.hash, bytes):
+            self.hash = int.from_bytes(self.hash, 'little')
         r += ser_uint256(self.hash)
         return r
 
     def __repr__(self) -> str:
         # assert isinstance(self.hash, int)
         if isinstance(self.hash, bytes):
-            int_hash = int.from_bytes(self.hash, 'little')
-        else:
-            int_hash = self.hash
-        return "COutPoint(hash=%064x)" % (int_hash)
+            self.hash = int.from_bytes(self.hash, 'little')
+        return "COutPoint(hash=%064x)" % (self.hash)
 
 
 class CTxIn(object):

@@ -373,7 +373,7 @@ return_OK:
     // transaction, otherwise abort
     // (this is done to keep the transaction counter limit per session
     // synchronized)
-    if (btchip_context_D.transactionContext.firstSigned)
+    if (true)
     {
         memmove(transactionSummary->authorizationHash,
                 authorizationHash,
@@ -382,6 +382,19 @@ return_OK:
     }
     else
     {
+        PRINTF("Auth Hash: \n");
+
+        for(int i = 0; i < 32; i++) {
+            PRINTF("%02x", authorizationHash[i]);
+        }
+        PRINTF("\n");
+
+        PRINTF("Auth Hash summary: \n");
+
+        for(int i = 0; i < 32; i++) {
+            PRINTF("%02x", transactionSummary->authorizationHash[i]);
+        }
+        PRINTF("\n");
         if (btchip_secure_memcmp(
                     authorizationHash,
                     transactionSummary->authorizationHash,
@@ -502,6 +515,7 @@ unsigned char btchip_bagl_user_action(unsigned char confirming) {
 
         if (btchip_context_D.outputParsingState == BTCHIP_OUTPUT_FINALIZE_TX)
         {
+            PRINTF("sign ready change\n");
             btchip_context_D.transactionContext.firstSigned = 0;
             btchip_context_D.transactionContext.transactionState = BTCHIP_TRANSACTION_SIGN_READY;
         }

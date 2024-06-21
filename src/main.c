@@ -136,6 +136,7 @@ uint8_t check_fee_swap() {
             btchip_context_D.totalOutputAmount);
     if ((borrow != 0) || (memcmp(fees, vars.swap_data.fees, 8) != 0))
         return 0;
+    PRINTF("fee swap change\n");
     btchip_context_D.transactionContext.firstSigned = 0;
     btchip_context_D.transactionContext.transactionState =
     BTCHIP_TRANSACTION_SIGN_READY;
@@ -362,6 +363,7 @@ unsigned int btchip_silent_confirm_single_output() {
 
     if (btchip_context_D.outputParsingState == BTCHIP_OUTPUT_FINALIZE_TX)
     {
+        PRINTF("FINALISE change\n");
         btchip_context_D.transactionContext.firstSigned = 0;
         btchip_context_D.transactionContext.transactionState = BTCHIP_TRANSACTION_SIGN_READY;
     }

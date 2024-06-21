@@ -75,6 +75,7 @@ unsigned short btchip_apdu_hash_input_start() {
                 return BTCHIP_SW_SECURITY_STATUS_NOT_SATISFIED;
             }
             // Master transaction reset
+            PRINTF("RESET change\n");
             btchip_context_D.transactionContext.firstSigned = 1;
             btchip_context_D.transactionContext.relaxed = 0;
             btchip_context_D.usingCashAddr = usingCashAddr;
