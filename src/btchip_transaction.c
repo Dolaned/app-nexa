@@ -22,7 +22,7 @@
 #define CONSENSUS_BRANCH_ID_SAPLING 0x76b809bb
 #define CONSENSUS_BRANCH_ID_ZCLASSIC 0x930b540d
 
-//Define for switch statement parsing of transaction for hashing 
+//Define for switch statement parsing of transaction for hashing
 #define PREVOUT 0x01
 #define SEQUENCE 0x02
 #define INPUTAMOUNTS 0x03
@@ -104,7 +104,7 @@ void transaction_offset(unsigned char value, unsigned int hashParseType) {
             cx_hash_no_throw(&btchip_context_D.hashOutputs.header, 0,
                 btchip_context_D.transactionBufferPointer, value, NULL, 0);
             break;
-    
+
     default:
         break;
     }
@@ -248,7 +248,6 @@ void transaction_parse(unsigned char parseMode) {
                 }
 
                 case BTCHIP_TRANSACTION_DEFINED_WAIT_INPUT: {
-                    unsigned char trustedInputFlag = 1;
                     PRINTF("Process input\n");
                     PRINTF("Parse Mode: %u \n", parseMode);
                     if (btchip_context_D.transactionContext
@@ -262,67 +261,37 @@ void transaction_parse(unsigned char parseMode) {
                         // No more data to read, ok
                         goto ok;
                     }
-                    // Proceed with the next input
-                    if (parseMode == PARSE_MODE_TRUSTED_INPUT) {
-                        check_transaction_available(
-                            33); // prevout : 1 type + 32 hash
-                        transaction_offset_increase(33, PREVOUT);
-                    }
-                    
-                    if (parseMode == PARSE_MODE_SIGNATURE) {
+
+                    if (parseMode == PARSE_MODE_SIGNATURE)
+                    {
                         unsigned char trustedInputLength;
                         unsigned char trustedInput[TRUSTED_INPUT_TOTAL_SIZE];
                         unsigned char amount[8];
                         unsigned char *savePointer;
 
-                        // Expect the trusted input flag and trusted input length
-                        check_transaction_available(2);
-                        switch (*btchip_context_D.transactionBufferPointer) {
-                        case 0:
-                            trustedInputFlag = 0;
-                            break;
-                        case 1:
-                            trustedInputFlag = 1;
-                            break;
-                        case 2:
-                            PRINTF("Segwit input not used in segwit mode\n");
-                            goto fail;
-                        default:
-                            PRINTF("Invalid trusted input flag\n");
-                            goto fail;
-                        }
-                        PRINTF("Trusted Input: %u \n", trustedInputFlag);
-
-                        // Handle non-segwit inputs (cashaddr) (i.e. InputHashStart 1st APDU's P2==00 && data[0]==0x00)
-                        if (!trustedInputFlag)
+                        // Only authorized in relaxed wallet and server
+                        // modes
+                        SB_CHECK(N_btchip.bkp.config.operationMode);
+                        switch (SB_GET(N_btchip.bkp.config.operationMode))
                         {
-                            // Only authorized in relaxed wallet and server
-                            // modes
-                            SB_CHECK(N_btchip.bkp.config.operationMode);
-                            switch (SB_GET(N_btchip.bkp.config.operationMode))
+                        case BTCHIP_MODE_WALLET:
+                            if (!optionP2SHSkip2FA)
                             {
-                            case BTCHIP_MODE_WALLET:
-                                if (!optionP2SHSkip2FA)
-                                {
-                                    PRINTF("Untrusted input not authorized\n");
-                                    goto fail;
-                                }
-                                break;
-                            case BTCHIP_MODE_RELAXED_WALLET:
-                            case BTCHIP_MODE_SERVER:
-                                break;
-                            default:
                                 PRINTF("Untrusted input not authorized\n");
                                 goto fail;
                             }
-                            btchip_context_D.transactionBufferPointer++;
-                            btchip_context_D.transactionDataRemaining--;
-                            check_transaction_available(
-                                33); // prevout : 1 type + 32 hash
-                            transaction_offset_increase(33, PREVOUT);
-                            PRINTF("Marking relaxed input\n");
-                            btchip_context_D.transactionContext.relaxed = 1;
+                            break;
+                        case BTCHIP_MODE_RELAXED_WALLET:
+                        case BTCHIP_MODE_SERVER:
+                            break;
+                        default:
+                            PRINTF("Untrusted input not authorized\n");
+                            goto fail;
                         }
+                        check_transaction_available(33); // prevout : 1 type + 32 hash
+                        transaction_offset_increase(33, PREVOUT);
+                        PRINTF("Marking relaxed input\n");
+                        btchip_context_D.transactionContext.relaxed = 1;
 
                         // Do not include the input script length + value in
                         // the authentication hash
@@ -336,7 +305,7 @@ void transaction_parse(unsigned char parseMode) {
                         transaction_get_varint(0);
                     PRINTF("Script to read " DEBUG_LONG "\n",btchip_context_D.transactionContext.scriptRemaining);
 
-                    if ((parseMode == PARSE_MODE_SIGNATURE) && !trustedInputFlag)
+                    if (parseMode == PARSE_MODE_SIGNATURE)
                     {
                         // Only proceeds if this is not to be signed - so length
                         // should be null
@@ -389,8 +358,7 @@ void transaction_parse(unsigned char parseMode) {
                             BTCHIP_TRANSACTION_DEFINED_WAIT_INPUT;
                         continue;
                     }
-                    // Save the last script byte for the P2SH check
-                    dataAvailable = btchip_context_D.transactionDataRemaining;
+                    dataAvailable = btchip_context_D.transactionContext.scriptRemaining;
                     PRINTF("Data Available: %u\n", dataAvailable);
                         // (btchip_context_D.transactionDataRemaining >
                         //          btchip_context_D.transactionContext
@@ -404,8 +372,7 @@ void transaction_parse(unsigned char parseMode) {
                         goto ok;
                     }
                     transaction_offset_increase(dataAvailable, 0);
-                    btchip_context_D.transactionContext.scriptRemaining -=
-                        dataAvailable;
+                    btchip_context_D.transactionContext.scriptRemaining -= dataAvailable;
                     PRINTF("Process input script 2, remaining " DEBUG_LONG "\n",btchip_context_D.transactionContext.scriptRemaining);
 
                     break;

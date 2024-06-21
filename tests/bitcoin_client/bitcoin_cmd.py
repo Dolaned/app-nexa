@@ -118,7 +118,7 @@ class BitcoinCommand(BitcoinBaseCommand):
 
             elif is_p2st(script_pub_key):
                 script_pub_key = (
-                    b"\x00" +  # OP_DUP
+                    b"\x00" +  # OP_0
                     b"\x51" +  # OP_HASH160
                     b"\x14" +  # bytes to push (20)
                     hash160(sign_pub_keys[i]))  # hash160(pubkey)
@@ -154,7 +154,7 @@ class BitcoinCommand(BitcoinBaseCommand):
                     b"\x51" +  # OP_HASH160
                     b"\x14" +  # bytes to push (20)
                     change_pubkey_hash)  # hash160(pubkey)
-                
+
 
             else:
                 raise Exception(f"Unsupported address: '{address}'")
