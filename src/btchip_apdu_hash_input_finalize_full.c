@@ -222,7 +222,7 @@ unsigned short btchip_apdu_hash_input_finalize_full_internal(
         return BTCHIP_SW_INCORRECT_P1_P2;
     }
 
-    PRINTF("p1: %u \n", p1);
+    PRINTF("p1: %x \n", p1);
 
     // Check state
     btchip_set_check_internal_structure_integrity(0);
@@ -237,7 +237,9 @@ unsigned short btchip_apdu_hash_input_finalize_full_internal(
     
 
     if (p1 == FINALIZE_P1_CHANGEINFO) {
+        PRINTF("IN CHANGE INFO\n");
         if (!btchip_context_D.transactionContext.firstSigned) {
+            PRINTF("Already validated, should be prevented on the client side\n");
             // Already validated, should be prevented on the client side
 return_OK:
             return BTCHIP_SW_OK;

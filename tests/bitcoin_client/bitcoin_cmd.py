@@ -82,10 +82,10 @@ class BitcoinCommand(BitcoinBaseCommand):
             )
             sign_pub_keys.append(compress_pub_key(sign_pub_key))
 
-        inputs: List[Tuple[CTransaction, bytes]] = [
-            (utxo, self.get_trusted_input(utxo=utxo, output_index=output_index))
-            for utxo, output_index, _ in utxos
-        ]
+        # inputs: List[Tuple[CTransaction, bytes]] = [
+        #     (utxo, self.get_trusted_input(utxo=utxo, output_index=output_index))
+        #     for utxo, output_index, _ in utxos
+        # ]
 
 
 
@@ -134,6 +134,7 @@ class BitcoinCommand(BitcoinBaseCommand):
             inputs.append({0, amount, shaResult})
 
         if amount_available - fees > amount:
+            print("packer her up boys")
             change_pub_key, _, _ = self.get_public_key(
                 addr_type=AddrType.CASHADDR,
                 bip32_path=change_path,
@@ -162,7 +163,8 @@ class BitcoinCommand(BitcoinBaseCommand):
                 CTxOut(nValue=amount_available - fees - amount,
                        scriptPubKey=change_script_pubkey)
             )
-
+        else:
+            change_path = None
         script_pub_key: bytes
         # P2PKH address (mainnet and testnet)
         if address.startswith("q"):
