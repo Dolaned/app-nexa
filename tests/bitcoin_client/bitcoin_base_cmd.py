@@ -246,6 +246,7 @@ class BitcoinBaseCommand:
         # response = 0x32 (1) || 0x00 (1) || random (2) || prev_txid (32) ||
         #            output_index (4) || amount (8) || HMAC (8)
             print(response)
+            print("response Length %d \n", len(response))
         assert len(response) == 56
 
         offset: int = 0

@@ -416,7 +416,7 @@ void transaction_parse(unsigned char parseMode) {
                         goto ok;
                     }
                     //type
-                    PRINTF("Getting outputs");
+                    PRINTF("Getting outputs\n");
                     check_transaction_available(1);
                     memmove(&btchip_context_D.transactionContext.outputType,
                             btchip_context_D.transactionBufferPointer,
@@ -441,7 +441,7 @@ void transaction_parse(unsigned char parseMode) {
                     btchip_context_D.transactionContext.scriptRemaining =
                         transaction_get_varint(OUTPUTS);
 
-                    PRINTF("Script to read " DEBUG_LONG "\n",btchip_context_D.transactionContext.scriptRemaining);
+                    PRINTF("Script to read outputs " DEBUG_LONG "\n",btchip_context_D.transactionContext.scriptRemaining);
                     // Move on
                     btchip_context_D.transactionContext.transactionState =
                         BTCHIP_TRANSACTION_OUTPUT_HASHING_IN_PROGRESS_OUTPUT_SCRIPT;

@@ -331,12 +331,14 @@ class BitcoinCommandBuilder:
         p2: int = 0x00
 
         p1 = 0xFF
+        print(change_path)
         if change_path:
             bip32_change_path: List[bytes] = bip32_path_from_string(change_path)
             cdata: bytes = b"".join([
                 len(bip32_change_path).to_bytes(1, byteorder="big"),
                 *bip32_change_path
             ])
+            print(cdata.hex())
             yield self.serialize(cla=self.CLA, ins=ins, p1=p1, p2=p2, cdata=cdata)
         else:
             yield self.serialize(cla=self.CLA, ins=ins, p1=p1, p2=p2, cdata=b"\x00")
