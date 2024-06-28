@@ -367,7 +367,7 @@ void transaction_parse(unsigned char parseMode) {
                            btchip_context_D.transactionBufferPointer = trustedInput + 4;
                            // TODO - validate this is 36 not 32
                            PRINTF("Trusted input hash\n%.*H\n", 36 ,btchip_context_D.transactionBufferPointer);
-                           transaction_offset(36);
+                           transaction_offset(36, PREVOUT);
 
                            btchip_context_D.transactionBufferPointer = savePointer + (2 + trustedInputLength);
                            btchip_context_D.transactionDataRemaining -= (2 + trustedInputLength);
