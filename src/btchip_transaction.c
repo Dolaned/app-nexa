@@ -177,13 +177,18 @@ void transaction_parse(unsigned char parseMode) {
                     // Reset transaction state
                     btchip_context_D.transactionContext
                         .transactionRemainingInputsOutputs = 0;
+
                     btchip_context_D.transactionContext
                         .transactionCurrentInputOutput = 0;
+
                     btchip_context_D.transactionContext.scriptRemaining = 0;
+
                     memset(
                         btchip_context_D.transactionContext.transactionAmount,
                         0, sizeof(btchip_context_D.transactionContext
                                       .transactionAmount));
+                    PRINTF("Transaction Amount: %u \n",btchip_context_D.transactionContext.transactionAmount);
+
                     // TODO : transactionControlFid
                     // Reset hashes
                     if (cx_sha256_init_no_throw(&btchip_context_D.transactionHashFull))
@@ -219,6 +224,7 @@ void transaction_parse(unsigned char parseMode) {
                     check_transaction_available(1);
                     memmove(&btchip_context_D.transactionVersion,
                                btchip_context_D.transactionBufferPointer, 1);
+                    PRINTF("Transaction Version: \n%.*H\n", 1, btchip_context_D.transactionBufferPointer);
                     transaction_offset_increase(1, 0);
 
                     // Number of inputs
@@ -253,6 +259,7 @@ void transaction_parse(unsigned char parseMode) {
                     unsigned char trustedInputFlag = 1;
                     if (btchip_context_D.transactionContext.transactionRemainingInputsOutputs == 0)
                     {
+                        PRINTF("Hashing Done");
                         // No more inputs to hash, move forward
                         btchip_context_D.transactionContext.transactionState =
                             BTCHIP_TRANSACTION_INPUT_HASHING_DONE;
@@ -260,6 +267,7 @@ void transaction_parse(unsigned char parseMode) {
                     }
                     if (btchip_context_D.transactionDataRemaining < 1)
                     {
+                        PRINTF("No more data to read");
                         // No more data to read, ok
                         goto ok;
                     }
@@ -267,6 +275,7 @@ void transaction_parse(unsigned char parseMode) {
                     // Proceed with the next input
                     if (parseMode == PARSE_MODE_TRUSTED_INPUT)
                     {
+                        PRINTF("We are in parse mode trusted input\n");
                         // prevout : 1 type + 32 hash
                         check_transaction_available(33);
                         transaction_offset_increase(33, PREVOUT);
@@ -353,6 +362,7 @@ void transaction_parse(unsigned char parseMode) {
                        // Handle non-segwit TrustedInput (i.e. InputHashStart 1st APDU's P2==00 & data[0]==0x01)
                        else // if (trustedInputFlag)
                        {
+                            PRINTF("Handle non-segwit TrustedInput \n");
                            memmove(
                                trustedInput,
                                btchip_context_D.transactionBufferPointer + 2,
@@ -583,6 +593,7 @@ void transaction_parse(unsigned char parseMode) {
                     check_transaction_available(4);
                     memmove(btchip_context_D.lockTime,
                                btchip_context_D.transactionBufferPointer, 4);
+                    PRINTF("Transaction LockTime: %u", btchip_context_D.lockTime);
                     transaction_offset_increase(4, 0);
 
                     if (btchip_context_D.transactionDataRemaining == 0) {
@@ -633,6 +644,7 @@ void transaction_parse(unsigned char parseMode) {
                 }
 
                 case BTCHIP_TRANSACTION_PARSED: {
+
                     PRINTF("Transaction parsed\n");
                     goto ok;
                 }
