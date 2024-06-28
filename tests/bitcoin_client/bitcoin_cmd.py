@@ -82,10 +82,10 @@ class BitcoinCommand(BitcoinBaseCommand):
             )
             sign_pub_keys.append(compress_pub_key(sign_pub_key))
 
-        # inputs: List[Tuple[CTransaction, bytes]] = [
-        #     (utxo, self.get_trusted_input(utxo=utxo, output_index=output_index))
-        #     for utxo, output_index, _ in utxos
-        # ]
+        inputs: List[Tuple[CTransaction, bytes]] = [
+            (utxo, self.get_trusted_input(utxo=utxo, output_index=output_index))
+            for utxo, output_index, _ in utxos
+        ]
 
 
 
@@ -95,6 +95,12 @@ class BitcoinCommand(BitcoinBaseCommand):
         tx.nLockTime = lock_time
         inputs = []
         # prepare vin
+        for i, (utxo, trusted_input) in enumerate(inputs):
+            if utxo.sha256 is None:
+                utxo.calcIdem()
+
+            _, _, _, prev_txid, output_index, _, _ = deser_trusted_input(trusted_input)
+            assert prev_txid != utxo.sha256
         for i, utxo_tuple in enumerate(utxos):
             utxo = utxo_tuple[0]
             output_index = utxo_tuple[1]

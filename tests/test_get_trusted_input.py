@@ -6,14 +6,12 @@ from bitcoin_client.utils import deser_trusted_input
 
 def test_get_trusted_inputs(cmd):
     raw_tx: bytes = bytes.fromhex(
-        # Version no (4 bytes little endian)
-        "02000000"
-        # In-counter (varint 1-9 bytes)
+        # Version no (4 bytes little endian) TODO: 1 byte
+        "00"
+        # vin-counter (varint 1-9 bytes)
         "02"
         # [1] Previous Transaction hash (32 bytes)
         "40d1ae8a596b34f48b303e853c56f8f6f54c483babc16978eb182e2154d5f2ab"
-        # [1] Previous Txout-index (4 bytes little endian)
-        "00000000"
         # [1] Txin-script length (varint 1-9 bytes)
         "6b"
         # [1] scriptSig (0x6b = 107 bytes)
@@ -34,8 +32,6 @@ def test_get_trusted_inputs(cmd):
         "fdffffff"
         # [2] Previous Transaction hash (32 bytes)
         "40d1ae8a596b34f48b303e853c56f8f6f54c483babc16978eb182e2154d5f2ab"
-        # [2] Previous Txout-index (4 bytes little endian)
-        "01000000"
         # [2] Txin-script length (varint 1-9 bytes)
         "6a"
         # [2] scriptSig (0x6a = 106 bytes)
@@ -68,18 +64,19 @@ def test_get_trusted_inputs(cmd):
     )
 
     tx: CTransaction
-    output_index: int
+    idem: bytes
     trusted_input: bytes
 
+    raw_tx = bytes.fromhex('000100dd891f8389bc0ea3fe7b667a2bc12e61f460bb183e20d037329078346a524dd86422210267351b8db6c8b6dde86e348063d88a3c5c2d1ac0e453988c9720045749ff89a0407e5d76eeb01ee0d7e8f581f617ea53437913c05c681c3f215743b4afe1032e073a55247db4638d065e2d8ba058c16dd1d0d718b372c42fce1d2a2ca34a4ea6eefeffffffe80300000000000001012d0300000000000017005114a3fc83ff618b7f5a1ee270964d401a1416b00153a43e0600')
     tx = CTransaction()
     tx.deserialize(BytesIO(raw_tx))
-    tx.calc_sha256()
+    tx.rehash()
+    print(tx)
 
-    output_index = 0
-    trusted_input = cmd.get_trusted_input(utxo=tx, output_index=output_index)
+    trusted_input = cmd.get_trusted_input(utxo=tx)
 
-    _, _, _, prev_txid, out_index, amount, _ = deser_trusted_input(trusted_input)
-    assert out_index == output_index
-    assert prev_txid == tx.sha256.to_bytes(32, byteorder="little")
-    assert amount == tx.vout[out_index].nValue
+    _, _, _, prev_txid, amount, _ = deser_trusted_input(trusted_input)
+
+    assert prev_txid == tx.idem.to_bytes(32, byteorder="little")
+
 

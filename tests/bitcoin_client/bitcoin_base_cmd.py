@@ -215,16 +215,13 @@ class BitcoinBaseCommand:
 
 
     def get_trusted_input(self,
-                          utxo: CTransaction,
-                          output_index: int) -> bytes:
+                          utxo: CTransaction) -> bytes:
         """Get trusted input given UTXO and output index.
 
         Parameters
         ----------
         utxo : CTransaction
             Serialized Bitcoin transaction to extract UTXO.
-        output_index : int
-            Index of the UTXO to build the trusted input.
 
         Returns
         -------
@@ -235,8 +232,7 @@ class BitcoinBaseCommand:
         sw: int
         response: bytes = b""
 
-        for chunk in self.builder.get_trusted_input(utxo, output_index):
-            print(chunk)
+        for chunk in self.builder.get_trusted_input(utxo):
             self.transport.send_raw(chunk)
             sw, response = self.transport.recv()  # type: int, bytes
 
@@ -244,10 +240,9 @@ class BitcoinBaseCommand:
                 raise DeviceException(error_code=sw, ins=InsType.GET_TRUSTED_INPUT)
 
         # response = 0x32 (1) || 0x00 (1) || random (2) || prev_txid (32) ||
-        #            output_index (4) || amount (8) || HMAC (8)
-            print(response)
-            print("response Length %d \n", len(response))
-        assert len(response) == 56
+        #            || amount (8) || HMAC (8)
+            print("response Length "+str(len(response))+" \n", )
+        assert len(response) == 52
 
         offset: int = 0
         magic_trusted_input: int = response[offset]

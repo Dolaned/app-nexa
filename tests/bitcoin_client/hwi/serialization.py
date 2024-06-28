@@ -426,6 +426,7 @@ class CTransaction(object):
     def rehash(self) -> None:
         self.sha256 = None
         self.calc_sha256()
+        self.calcIdem()
 
     # We will only cache the serialization without witness in
     # self.sha256 and self.hash -- those are expected to be the txid.

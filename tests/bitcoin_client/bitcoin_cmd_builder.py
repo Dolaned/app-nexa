@@ -185,8 +185,7 @@ class BitcoinCommandBuilder:
         return self.serialize(cla=self.CLA, ins=ins, p1=p1, p2=p2, cdata=cdata)
 
     def get_trusted_input(self,
-                          utxo: CTransaction,
-                          output_index: int) -> Iterator[bytes]:
+                          utxo: CTransaction) -> Iterator[bytes]:
         """Command builder for GET_TRUSTED_INPUT.
 
         Parameters
@@ -209,8 +208,7 @@ class BitcoinCommandBuilder:
         p1: int
         p2: int = 0x00
 
-        cdata: bytes = (output_index.to_bytes(4, byteorder="big") +
-                        utxo.serialize())
+        cdata: bytes = utxo.serialize()
 
         for i, (is_last, chunk) in enumerate(chunkify(cdata, MAX_APDU_LEN)):
             p1 = 0x00 if i == 0 else 0x80
@@ -227,9 +225,10 @@ class BitcoinCommandBuilder:
                                  p2=p2,
                                  cdata=chunk)
 
+
     def untrusted_hash_tx_input_start(self,
                                       tx: CTransaction,
-                                      inputs: List[Tuple[int, bytes, int]],
+                                      inputs: List[Tuple[CTransaction, bytes]],
                                       input_index: int,
                                       script: bytes,
                                       is_new_transaction: bool
@@ -240,7 +239,7 @@ class BitcoinCommandBuilder:
         ----------
         tx: CTransaction
             Serialized Bitcoin transaction to sign.
-        inputs: List[Tuple[input_type, outpoint_hash, amount]]
+        inputs: List[Tuple[CTransaction, bytes]]
             List of inputs with pair of UTXO and trusted input.
         input_index: int
             Index of the input to process.
@@ -262,11 +261,12 @@ class BitcoinCommandBuilder:
         p1: int = 0x00
         # P2:
         # - 0x80, new transaction
-        p2: int = 0x80
+        # - 0x02, new transaction with segwit input
+        p2: int = 0x02 if is_new_transaction else 0x80
 
-        cdata: bytes = (tx.nVersion.to_bytes(1, byteorder="little") +
+        cdata: bytes = (tx.nVersion.to_bytes(4, byteorder="little") +
                         ser_compact_size(len(inputs)))
-        print("c data len first step" + str(len(cdata)))
+
         yield self.serialize(cla=self.CLA,
                              ins=ins,
                              p1=p1,
@@ -274,34 +274,27 @@ class BitcoinCommandBuilder:
                              cdata=cdata)
 
         p1 = 0x80
-        print(inputs)
-        for i, (input_type, outpoint_hash, amount) in enumerate(inputs):
-            # print(outpoint_hash)
+        for i, (_, trusted_input) in enumerate(inputs):
             script_sig: bytes = script if i == input_index else b""
-            cdata = input_type.to_bytes(1, byteorder="little")
-            cdata = cdata + bytes(outpoint_hash)
-            cdata = cdata + ser_compact_size(len(script_sig))
-            print(outpoint_hash.hex())
-            print(cdata.hex())
-            print(ser_compact_size(len(script_sig)))
-            print("c data input start loop" + str(len(cdata)))
-            yield self.serialize(cla=self.CLA,
-                                 ins=ins,
-                                 p1=p1,
-                                 p2=p2,
-                                 cdata=cdata)
-            print(script_sig.hex())
-            cdata=(script_sig + 0xfffffffd.to_bytes(4, byteorder="little") + amount.to_bytes(8, byteorder="little"))
-            print("c data input loop script sig" + str(len(cdata)))
+            cdata = b"".join([
+                b"\x01",  # 0x01 for trusted input, 0x02 for witness, 0x00 otherwise
+                len(trusted_input).to_bytes(1, byteorder="big"),
+                trusted_input,
+                ser_compact_size(len(script_sig))
+            ])
 
-            cdata = script_sig
-            cdata = cdata + 0xfffffffd.to_bytes(4, byteorder="little")
-            cdata = cdata + amount.to_bytes(8, byteorder="little")
             yield self.serialize(cla=self.CLA,
                                  ins=ins,
                                  p1=p1,
                                  p2=p2,
                                  cdata=cdata)
+
+            yield self.serialize(cla=self.CLA,
+                                 ins=ins,
+                                 p1=p1,
+                                 p2=p2,
+                                 cdata=(script_sig +
+                                        0xfffffffd.to_bytes(4, byteorder="little")))
 
     def untrusted_hash_tx_input_finalize(self,
                                          tx: CTransaction,
@@ -331,14 +324,12 @@ class BitcoinCommandBuilder:
         p2: int = 0x00
 
         p1 = 0xFF
-        print(change_path)
         if change_path:
             bip32_change_path: List[bytes] = bip32_path_from_string(change_path)
             cdata: bytes = b"".join([
                 len(bip32_change_path).to_bytes(1, byteorder="big"),
                 *bip32_change_path
             ])
-            print(cdata.hex())
             yield self.serialize(cla=self.CLA, ins=ins, p1=p1, p2=p2, cdata=cdata)
         else:
             yield self.serialize(cla=self.CLA, ins=ins, p1=p1, p2=p2, cdata=b"\x00")

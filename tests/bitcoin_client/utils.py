@@ -27,7 +27,7 @@ def chunkify(data: bytes, chunk_len: int) -> Iterator[Tuple[bool, bytes]]:
 def deser_trusted_input(trusted_input: bytes
                         ) -> Tuple[int, int, bytes, bytes, int, int, bytes]:
     """Deserialize trusted input into 7 items."""
-    assert len(trusted_input) == 56
+    assert len(trusted_input) == 52
 
     offset: int = 0
     magic_trusted_input: int = trusted_input[offset]
@@ -40,9 +40,7 @@ def deser_trusted_input(trusted_input: bytes
     offset += 2
     prev_txid: bytes = trusted_input[offset:offset + 32]
     offset += 32
-    out_index: int = int.from_bytes(trusted_input[offset:offset + 4],
-                                    byteorder="little")
-    offset += 4
+
     amount: int = int.from_bytes(trusted_input[offset:offset + 8],
                                  byteorder="little")
     offset += 8
@@ -52,4 +50,4 @@ def deser_trusted_input(trusted_input: bytes
     assert offset == len(trusted_input)
 
     return (magic_trusted_input, zero, random,
-            prev_txid, out_index, amount, hmac)
+            prev_txid, amount, hmac)
