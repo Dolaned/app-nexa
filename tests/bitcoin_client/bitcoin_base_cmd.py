@@ -242,7 +242,7 @@ class BitcoinBaseCommand:
         # response = 0x32 (1) || 0x00 (1) || random (2) || prev_txid (32) ||
         #            || amount (8) || HMAC (8)
             print("response Length "+str(len(response))+" \n", )
-        assert len(response) == 52
+        assert len(response) == 56
 
         offset: int = 0
         magic_trusted_input: int = response[offset]
@@ -254,11 +254,17 @@ class BitcoinBaseCommand:
         _: bytes = response[offset:offset + 2]  # random
         offset += 2
         prev_txid: bytes = response[offset:offset + 32]
+        # TODO GET THIS WORKING
+        utxo.rehash()
+        print(utxo.idem.hex())
+        print(utxo.hash)
+        print("\n")
+        print(prev_txid.hex()+ "\n")
         assert prev_txid == hash256(utxo.serialize())
         offset += 32
         out_index: int = int.from_bytes(response[offset:offset + 4],
                                         byteorder="little")
-        assert out_index == output_index
+        assert out_index == 0
         offset += 4
         amount: int = int.from_bytes(response[offset:offset + 8],
                                      byteorder="little")

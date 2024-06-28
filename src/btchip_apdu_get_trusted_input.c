@@ -44,7 +44,8 @@ unsigned short btchip_apdu_get_trusted_input() {
             BTCHIP_TRANSACTION_NONE;
         btchip_context_D.trustedInputProcessed = 0;
         btchip_set_check_internal_structure_integrity(1);
-        dataOffset = 4;
+        // TODO, THIS OFFSET BELOW WAS BREAKING EVERYTHING
+        dataOffset = 0;
         btchip_context_D.transactionHashOption = TRANSACTION_HASH_FULL;
     } else if (G_io_apdu_buffer[ISO_OFFSET_P1] != GET_TRUSTED_INPUT_P1_NEXT) {
         return BTCHIP_SW_INCORRECT_P1_P2;
@@ -56,11 +57,14 @@ unsigned short btchip_apdu_get_trusted_input() {
     btchip_context_D.transactionBufferPointer =
         G_io_apdu_buffer + ISO_OFFSET_CDATA + dataOffset;
     btchip_context_D.transactionDataRemaining = apduLength - dataOffset;
+    PRINTF("TRANSACTION DATA REMAINING: %u \n", btchip_context_D.transactionDataRemaining);
 
+    PRINTF("BEFORE PARSE TRUSTED INPUT \n");
     transaction_parse(PARSE_MODE_TRUSTED_INPUT);
-
+    PRINTF("AFTER PARSE TRUSTED INPUT \n");
     if (btchip_context_D.transactionContext.transactionState ==
         BTCHIP_TRANSACTION_PARSED) {
+       PRINTF("Trusted INPUT TX PARSED \n");
 
         btchip_context_D.transactionContext.transactionState =
             BTCHIP_TRANSACTION_NONE;
@@ -82,7 +86,7 @@ unsigned short btchip_apdu_get_trusted_input() {
         cx_hash_sha256(G_io_apdu_buffer + TRUSTED_INPUT_SIZE, 32, G_io_apdu_buffer + 4, 32);
 
         btchip_write_u32_le(G_io_apdu_buffer + 4 + 32,
-                            btchip_context_D.transactionTargetInput);
+                            0);
         memmove(G_io_apdu_buffer + 4 + 32 + 4,
                    btchip_context_D.transactionContext.transactionAmount, 8);
 
@@ -90,6 +94,10 @@ unsigned short btchip_apdu_get_trusted_input() {
                        sizeof(N_btchip.bkp.trustedinput_key), G_io_apdu_buffer,
                        TRUSTED_INPUT_SIZE, G_io_apdu_buffer + TRUSTED_INPUT_SIZE, 32);
         btchip_context_D.outLength = TRUSTED_INPUT_TOTAL_SIZE;
+    } else {
+        PRINTF("Transaction State: %u \n", btchip_context_D.transactionContext.transactionState);
+        
+        PRINTF("TX DATA IS NOT OK \n");
     }
     return BTCHIP_SW_OK;
 }

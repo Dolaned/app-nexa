@@ -135,6 +135,7 @@ unsigned long int transaction_get_varint(unsigned int hashParseType) {
     unsigned char firstByte;
     check_transaction_available(1);
     firstByte = *btchip_context_D.transactionBufferPointer;
+    PRINTF("FIRST BYTE CHECKING VARINT: %u \n", firstByte);
     if (firstByte < 0xFD) {
         transaction_offset_increase(1, hashParseType);
         return firstByte;
@@ -232,6 +233,7 @@ void transaction_parse(unsigned char parseMode) {
                         .transactionRemainingInputsOutputs =
                         transaction_get_varint(0);
                     PRINTF("Number of inputs : " DEBUG_LONG "\n",btchip_context_D.transactionContext.transactionRemainingInputsOutputs);
+
                     if (btchip_context_D.called_from_swap && parseMode == PARSE_MODE_SIGNATURE)
                     {
                         // remember number of inputs to know when to exit from library
@@ -256,6 +258,8 @@ void transaction_parse(unsigned char parseMode) {
                 case BTCHIP_TRANSACTION_DEFINED_WAIT_INPUT: {
                     PRINTF("Process input\n");
                     PRINTF("Parse Mode: %u \n", parseMode);
+                    PRINTF("Script to read DEFINED_WAIT_INPUT " DEBUG_LONG "\n",btchip_context_D.transactionContext.scriptRemaining);
+                    PRINTF("transaction to read DEFINED_WAIT_INPUT " DEBUG_LONG "\n",btchip_context_D.transactionDataRemaining);
                     unsigned char trustedInputFlag = 1;
                     if (btchip_context_D.transactionContext.transactionRemainingInputsOutputs == 0)
                     {
@@ -267,7 +271,7 @@ void transaction_parse(unsigned char parseMode) {
                     }
                     if (btchip_context_D.transactionDataRemaining < 1)
                     {
-                        PRINTF("No more data to read");
+                        PRINTF("No more data to read \n");
                         // No more data to read, ok
                         goto ok;
                     }
@@ -399,10 +403,11 @@ void transaction_parse(unsigned char parseMode) {
                        }
                        // Do not include the input script length + value in
                        // the authentication hash
-                       PRINTF("print 328\n");
+                      
                        btchip_context_D.transactionHashOption = TRANSACTION_HASH_FULL;
                        PRINTF("print 330\n");
                     }
+                     btchip_context_D.transactionContext.scriptRemaining =transaction_get_varint(0);
                     // Read the script length
                     PRINTF("Reading Script Length\n");
                     PRINTF("Script to read " DEBUG_LONG "\n",btchip_context_D.transactionContext.scriptRemaining);
@@ -518,7 +523,7 @@ void transaction_parse(unsigned char parseMode) {
                         goto ok;
                     }
                     //type
-                    PRINTF("Getting outputs\n");
+                    PRINTF("Getting outputs \n");
                     check_transaction_available(1);
                     memmove(&btchip_context_D.transactionContext.outputType,
                             btchip_context_D.transactionBufferPointer,
@@ -527,10 +532,12 @@ void transaction_parse(unsigned char parseMode) {
 
                     // Amount
                     check_transaction_available(8);
-                    if ((parseMode == PARSE_MODE_TRUSTED_INPUT) &&
-                        (btchip_context_D.transactionContext
-                             .transactionCurrentInputOutput ==
-                         btchip_context_D.transactionTargetInput)) {
+                    PRINTF("CURRENT UTXO : " DEBUG_LONG "\n",
+                        btchip_context_D.transactionContext.transactionCurrentInputOutput);
+                    PRINTF("TARGET UTXO : " DEBUG_LONG "\n",
+                        btchip_context_D.transactionTargetInput);
+                    // TODO, fix this because output index is no longer used
+                    if ((parseMode == PARSE_MODE_TRUSTED_INPUT) && (btchip_context_D.transactionContext.transactionCurrentInputOutput == 0)) {
                         // Save the amount
                         memmove(btchip_context_D.transactionContext
                                        .transactionAmount,
