@@ -265,9 +265,10 @@ class BitcoinCommandBuilder:
         # P2:
         # - 0x80, new transaction
         # - 0x02, new transaction with segwit input
-        p2: int = 0x00
+        # - 0x03 new transaction cashaddr
+        p2: int = 0x03
 
-        cdata: bytes = (tx.nVersion.to_bytes(4, byteorder="little") +
+        cdata: bytes = (tx.nVersion.to_bytes(1, byteorder="little") +
                         ser_compact_size(len(inputs)))
 
         yield self.serialize(cla=self.CLA,

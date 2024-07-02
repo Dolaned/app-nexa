@@ -197,12 +197,10 @@ void transaction_parse(unsigned char parseMode) {
                     {
                         goto fail;
                     }
-                    if (cx_sha256_init_no_throw(
-                        &btchip_context_D.transactionHashAuthorization)) {
+                    if (cx_sha256_init_no_throw(&btchip_context_D.transactionHashAuthorization)) {
                         goto fail;
                     }
-                    if (cx_sha256_init_no_throw(
-                        &btchip_context_D.transactionIdem)) {
+                    if (cx_sha256_init_no_throw(&btchip_context_D.transactionIdem)) {
                         goto fail;
                     }
 
@@ -385,8 +383,8 @@ void transaction_parse(unsigned char parseMode) {
                            savePointer = btchip_context_D.transactionBufferPointer;
                            btchip_context_D.transactionBufferPointer = trustedInput + 4;
                            // TODO - validate this is 36 not 32
-                           PRINTF("Trusted input hash\n%.*H\n", 36 ,btchip_context_D.transactionBufferPointer);
-                           transaction_offset(36, PREVOUT);
+                           PRINTF("Trusted input hash\n%.*H\n", 32 ,btchip_context_D.transactionBufferPointer);
+                           transaction_offset(32, PREVOUT);
 
                            btchip_context_D.transactionBufferPointer = savePointer + (2 + trustedInputLength);
                            btchip_context_D.transactionDataRemaining -= (2 + trustedInputLength);
@@ -410,7 +408,6 @@ void transaction_parse(unsigned char parseMode) {
                        // the authentication hash
                       
                        btchip_context_D.transactionHashOption = TRANSACTION_HASH_FULL;
-                       PRINTF("print 330\n");
                     }
                     btchip_context_D.transactionContext.scriptRemaining = transaction_get_varint(SCRIPTSIG);
                     // Read the script length

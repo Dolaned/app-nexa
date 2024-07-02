@@ -72,11 +72,22 @@ def test_get_trusted_inputs(cmd):
     tx.deserialize(BytesIO(raw_tx))
     tx.rehash()
 
+    raw_tx_two = bytes.fromhex('000100251db01d59cb236482aa9b3b145674477ad4218b34d7153f00bfb284bcfe15536422210267351b8db6c8b6dde86e348063d88a3c5c2d1ac0e453988c9720045749ff89a0407e5d76eeb01ee0d7e8f581f617ea53437913c05c681c3f215743b4afe1032e073a55247db4638d065e2d8ba058c16dd1d0d718b372c42fce1d2a2ca34a4ea6eefeffffff2d0300000000000001018602000000000000170051149cdd01d51fefe0f397b992a23018fbab6282fc42a73e0600')
+    tx2 = CTransaction()
+    tx2.deserialize(BytesIO(raw_tx_two))
+    tx2.rehash()
 
     trusted_input = cmd.get_trusted_input(utxo=tx)
 
     _, _, _, prev_idem, amount, _, _ = deser_trusted_input(trusted_input)
 
     assert prev_idem.hex() == tx.idem.hex()
+
+    trusted_input2 = cmd.get_trusted_input(utxo=tx2)
+
+    _, _, _, prev_idem, amount, _, _ = deser_trusted_input(trusted_input2)
+    print(prev_idem)
+
+    assert prev_idem.hex() == tx2.idem.hex()
 
 

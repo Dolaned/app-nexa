@@ -164,7 +164,8 @@ class BitcoinCommand(BitcoinBaseCommand):
 
         tx.vout.append(CTxOut(nValue=amount,
                               scriptPubKey=script_pub_key))
-
+        print("inputs below \n")
+        print(inputs)
         for i in range(len(tx.vin)):
             print("vin loop")
             # print(tx)
@@ -188,6 +189,7 @@ class BitcoinCommand(BitcoinBaseCommand):
                                                is_new_transaction=False)
             
             _, _, amount = utxos[i]
+            print(utxos[i])
             sigs.append(
                 (bip143_digest(tx, amount, i),
                  sign_pub_keys[i],

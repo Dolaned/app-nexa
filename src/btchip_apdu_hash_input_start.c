@@ -94,8 +94,9 @@ unsigned short btchip_apdu_hash_input_start() {
     btchip_context_D.transactionBufferPointer =
         G_io_apdu_buffer + ISO_OFFSET_CDATA;
     btchip_context_D.transactionDataRemaining = apduLength;
-
+    PRINTF("BEFORE HASH INPUT START \n");
+    PRINTF("LENGTH OF HASH START: %u \n", apduLength);
     transaction_parse(PARSE_MODE_SIGNATURE);
-
+    PRINTF("AFTER HASH INPUT START \n");
     return BTCHIP_SW_OK;
 }
