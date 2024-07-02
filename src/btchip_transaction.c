@@ -454,10 +454,14 @@ void transaction_parse(unsigned char parseMode) {
                         check_transaction_available(4);
                         transaction_offset_increase(4, SEQUENCE);
 
+                        // TODO FIX THIS ITS WRONG
+                        if(parseMode == PARSE_MODE_TRUSTED_INPUT){
+                            PRINTF("CHECKING AMOUNT\n");
+                            check_transaction_available(8);
+                            transaction_offset_increase(8, INPUTAMOUNTS);
+                        }
                         //amount
-                        PRINTF("CHECKING AMOUNT\n");
-                        check_transaction_available(8);
-                        transaction_offset_increase(8, INPUTAMOUNTS);
+
                         // Move to next input
                         btchip_context_D.transactionContext
                             .transactionRemainingInputsOutputs--;

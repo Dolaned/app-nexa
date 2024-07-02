@@ -47,6 +47,9 @@ end:
     if(error == CX_OVERFLOW) {
         PRINTF("Internal OVERFLOW\n");
     }
+    if(error == CX_INVALID_PARAMETER){
+        PRINTF("INVALID PARAMETER\n");
+    }
     if(error != CX_OK) {
         PRINTF("Error Other: %u\n", error);
     }

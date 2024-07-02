@@ -286,19 +286,22 @@ class BitcoinCommandBuilder:
                 trusted_input,
                 ser_compact_size(len(script_sig))
             ])
+            print("Data below: \n")
+            print(cdata.hex())
 
             yield self.serialize(cla=self.CLA,
                                  ins=ins,
                                  p1=p1,
                                  p2=p2,
                                  cdata=cdata)
-
+            
+            data = script_sig + 0xfffffffd.to_bytes(4, byteorder="little")
+            print(data.hex())
             yield self.serialize(cla=self.CLA,
                                  ins=ins,
                                  p1=p1,
                                  p2=p2,
-                                 cdata=(script_sig +
-                                        0xfffffffd.to_bytes(4, byteorder="little")))
+                                 cdata=data)
 
     def untrusted_hash_tx_input_finalize(self,
                                          tx: CTransaction,

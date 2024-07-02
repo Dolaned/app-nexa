@@ -21,7 +21,7 @@
 #include "btchip_display_variables.h"
 #include "ui.h"
 
-#define SIGHASH_ALL 0x00
+#define SIGHASH_ALL 0x01
 
 unsigned short btchip_apdu_hash_sign() {
     unsigned long int lockTime;
@@ -52,20 +52,30 @@ unsigned short btchip_apdu_hash_sign() {
 
     // Check state
     btchip_set_check_internal_structure_integrity(0);
+    if (btchip_context_D.transactionContext.transactionState != BTCHIP_TRANSACTION_SIGN_READY){
+        PRINTF("TRANSACTION STATE INCORRECT LETS FORCE IT \n");
+        btchip_context_D.transactionContext.transactionState = BTCHIP_TRANSACTION_SIGN_READY;
+    }
 
     if (btchip_context_D.transactionContext.transactionState != BTCHIP_TRANSACTION_SIGN_READY)
     {
+        
         PRINTF("Invalid transaction state %d\n", btchip_context_D.transactionContext.transactionState);
         sw = BTCHIP_SW_CONDITIONS_OF_USE_NOT_SATISFIED;
         goto discardTransaction;
     }
 
+    PRINTF("BUFFER OBJECT: %u \n", G_io_apdu_buffer[ISO_OFFSET_CDATA]);
+
     // Read parameters
     if (G_io_apdu_buffer[ISO_OFFSET_CDATA] > MAX_BIP32_PATH)
     {
+        PRINTF("BIP ISSUE \n");
         sw = BTCHIP_SW_INCORRECT_DATA;
         goto discardTransaction;
     }
+
+    PRINTF("HERE \n");
     memmove(btchip_context_D.transactionSummary.keyPath,
             G_io_apdu_buffer + ISO_OFFSET_CDATA,
             MAX_BIP32_PATH_LENGTH);
@@ -76,11 +86,16 @@ unsigned short btchip_apdu_hash_sign() {
     parameters += 4;
     sighashType = *(parameters++);
     btchip_context_D.transactionSummary.sighashType = sighashType;
+    PRINTF("Parameters: %u \n", parameters);
+    PRINTF("Keypath: %u \n", btchip_context_D.transactionSummary.keyPath);
+    PRINTF("authorization len: %u \n", authorizationLength);
+    PRINTF("locktime: %u \n", lockTime);
+    PRINTF("sighashtype: %u \n", sighashType);
 
-    if (((N_btchip.bkp.config.options &
-                    BTCHIP_OPTION_FREE_SIGHASHTYPE) == 0)) {
+    if (((N_btchip.bkp.config.options & BTCHIP_OPTION_FREE_SIGHASHTYPE) == 0)) {
 
         if (sighashType != SIGHASH_ALL) {
+            PRINTF("NOT SIGHASH ALL \n");
             sw = BTCHIP_SW_INCORRECT_DATA;
             goto discardTransaction;
         }
@@ -133,7 +148,7 @@ void btchip_bagl_user_action_signtx(unsigned char confirming, unsigned char dire
     {
         unsigned char hash[32];
         cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, CX_LAST, hash, 0, hash, 32);
-        PRINTF("Hash1\n%.*H\n", sizeof(hash), hash);
+        PRINTF("Hash: %.*H\n", sizeof(hash), hash);
         
         // Sign
         size_t out_len = sizeof(G_io_apdu_buffer);

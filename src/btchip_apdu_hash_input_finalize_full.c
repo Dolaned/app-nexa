@@ -377,6 +377,7 @@ return_OK:
     // synchronized)
     if (btchip_context_D.transactionContext.firstSigned)
     {
+        PRINTF("IN FIRST SIGNED \n");
         memmove(transactionSummary->authorizationHash,
                 authorizationHash,
                 sizeof(transactionSummary->authorizationHash));
