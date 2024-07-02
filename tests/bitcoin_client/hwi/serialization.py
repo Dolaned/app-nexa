@@ -303,7 +303,7 @@ def is_p2sh(script: bytes) -> bool:
     return len(script) == 23 and script[0] == 0xa9 and script[1] == 0x14 and script[22] == 0x87
 
 def is_p2st(script: bytes) -> bool:
-    return len(script) == 32 and script[0] == 0x00 and script[1] == 0x51 and script[2] == 0x14
+    return len(script) == 24 and script[0] == 0x00 and script[1] == 0x51 and script[2] == 0x14
 
 def is_p2pkh(script: bytes) -> bool:
     return (len(script) == 25 and

@@ -153,6 +153,8 @@ struct btchip_context_s {
 
     /** Full transaction hash context */
     cx_sha256_t  transactionHashFull;
+
+    cx_sha256_t transactionIdem;
     /** Authorization transaction hash context */
     cx_sha256_t transactionHashAuthorization;
     /** Current hash to perform (TRANSACTION_HASH_) */

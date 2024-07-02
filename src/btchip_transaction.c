@@ -27,6 +27,7 @@
 #define SEQUENCE 0x02
 #define INPUTAMOUNTS 0x03
 #define OUTPUTS 0x04
+#define SCRIPTSIG 0x05
 
 #define DEBUG_LONG "%d"
 
@@ -111,13 +112,13 @@ void transaction_offset(unsigned char value, unsigned int hashParseType) {
 
 
 
-    if ((btchip_context_D.transactionHashOption & TRANSACTION_HASH_FULL) != 0)
+    if ((btchip_context_D.transactionHashOption & TRANSACTION_HASH_FULL) != 0 && (hashParseType != SCRIPTSIG))
     {
         PRINTF("--- ADD TO HASH FULL:\n%.*H\n", value, btchip_context_D.transactionBufferPointer);
         cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0,
             btchip_context_D.transactionBufferPointer, value, NULL, 0);
     }
-    if ((btchip_context_D.transactionHashOption & TRANSACTION_HASH_AUTHORIZATION) != 0)
+    if ((btchip_context_D.transactionHashOption & TRANSACTION_HASH_AUTHORIZATION) != 0 && (hashParseType != SCRIPTSIG))
     {
         PRINTF("--- ADD TO HASH AUTH:\n%.*H\n", value, btchip_context_D.transactionBufferPointer);
         cx_hash_no_throw(&btchip_context_D.transactionHashAuthorization.header, 0,
@@ -200,6 +201,10 @@ void transaction_parse(unsigned char parseMode) {
                         &btchip_context_D.transactionHashAuthorization)) {
                         goto fail;
                     }
+                    if (cx_sha256_init_no_throw(
+                        &btchip_context_D.transactionIdem)) {
+                        goto fail;
+                    }
 
                     if (cx_sha256_init_no_throw(&btchip_context_D.hashPrevouts))
                     {
@@ -263,7 +268,7 @@ void transaction_parse(unsigned char parseMode) {
                     unsigned char trustedInputFlag = 1;
                     if (btchip_context_D.transactionContext.transactionRemainingInputsOutputs == 0)
                     {
-                        PRINTF("Hashing Done");
+                        PRINTF("Hashing Done, No remaining inputs \n");
                         // No more inputs to hash, move forward
                         btchip_context_D.transactionContext.transactionState =
                             BTCHIP_TRANSACTION_INPUT_HASHING_DONE;
@@ -407,7 +412,7 @@ void transaction_parse(unsigned char parseMode) {
                        btchip_context_D.transactionHashOption = TRANSACTION_HASH_FULL;
                        PRINTF("print 330\n");
                     }
-                     btchip_context_D.transactionContext.scriptRemaining =transaction_get_varint(0);
+                    btchip_context_D.transactionContext.scriptRemaining = transaction_get_varint(SCRIPTSIG);
                     // Read the script length
                     PRINTF("Reading Script Length\n");
                     PRINTF("Script to read " DEBUG_LONG "\n",btchip_context_D.transactionContext.scriptRemaining);
@@ -478,7 +483,7 @@ void transaction_parse(unsigned char parseMode) {
                     if (dataAvailable == 0) {
                         goto ok;
                     }
-                    transaction_offset_increase(dataAvailable, 0);
+                    transaction_offset_increase(dataAvailable, SCRIPTSIG);
                     btchip_context_D.transactionContext.scriptRemaining -= dataAvailable;
                     PRINTF("Process input script 2, remaining " DEBUG_LONG "\n",btchip_context_D.transactionContext.scriptRemaining);
 
@@ -600,7 +605,6 @@ void transaction_parse(unsigned char parseMode) {
                     check_transaction_available(4);
                     memmove(btchip_context_D.lockTime,
                                btchip_context_D.transactionBufferPointer, 4);
-                    PRINTF("Transaction LockTime: %u", btchip_context_D.lockTime);
                     transaction_offset_increase(4, 0);
 
                     if (btchip_context_D.transactionDataRemaining == 0) {
@@ -672,43 +676,55 @@ void transaction_parse(unsigned char parseMode) {
             PRINTF("Transaction parse - fail\n");
             THROW(EXCEPTION);
         ok : {
-            //transactionVersion
-            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, &btchip_context_D.transactionVersion, 1, NULL, 0);
+                        // unsigned char hashInputAmounts[32];
+            // memset(hashInputAmounts, 0, 32);
+            // cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, CX_LAST, NULL, 0, &btchip_context_D.transactionHashFull.header, 32);
 
-            // prevouts
-            unsigned char prevoutHash[32];
-            memset(prevoutHash, 0, 32);
-            cx_hash_no_throw(&btchip_context_D.hashPrevouts.header, CX_LAST, NULL, 0, prevoutHash, 32);
-            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, prevoutHash, 32, NULL, 0);
+            // PRINTF("IN OK FUNCTION \n");
+            // //transactionVersion
+            // cx_hash_no_throw(&btchip_context_D.transactionIdem.header, 0, &btchip_context_D.transactionVersion, 1, NULL, 0);
 
-            //input amounts
-            unsigned char hashInputAmounts[32];
-            memset(hashInputAmounts, 0, 32);
-            cx_hash_no_throw(&btchip_context_D.hashInputAmounts.header, CX_LAST, NULL, 0, hashInputAmounts, 32);
-            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, hashInputAmounts, 32, NULL, 0);
+            // // prevouts
+            // unsigned char prevoutHash[32];
+            // memset(prevoutHash, 0, 32);
+            // cx_hash_no_throw(&btchip_context_D.hashPrevouts.header, CX_LAST, NULL, 0, prevoutHash, 32);
+            // cx_hash_no_throw(&btchip_context_D.transactionIdem.header, 0, prevoutHash, 32, NULL, 0);
 
-            //sequence
-            unsigned char hashSequence[32];
-            memset(hashSequence, 0, 32);
-            cx_hash_no_throw(&btchip_context_D.hashSequence.header, CX_LAST, NULL, 0, hashSequence, 32);
-            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, hashSequence, 32, NULL, 0);
+            // //input amounts
+            // unsigned char hashInputAmounts[32];
+            // memset(hashInputAmounts, 0, 32);
+            // cx_hash_no_throw(&btchip_context_D.hashInputAmounts.header, CX_LAST, NULL, 0, hashInputAmounts, 32);
+            // cx_hash_no_throw(&btchip_context_D.transactionIdem.header, 0, hashInputAmounts, 32, NULL, 0);
 
-            //0x6CAD
-            unsigned char scriptcode[2] = { 0x6C, 0xAD };
-            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, scriptcode, 2, NULL, 0);
+            // //sequence
+            // unsigned char hashSequence[32];
+            // memset(hashSequence, 0, 32);
+            // cx_hash_no_throw(&btchip_context_D.hashSequence.header, CX_LAST, NULL, 0, hashSequence, 32);
+            // cx_hash_no_throw(&btchip_context_D.transactionIdem.header, 0, hashSequence, 32, NULL, 0);
 
-            //Outputs
-            unsigned char hashOutputs[32];
-            memset(hashOutputs, 0, 32);
-            cx_hash_no_throw(&btchip_context_D.hashOutputs.header, CX_LAST, NULL, 0, hashOutputs, 32);
-            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, hashOutputs, 32, NULL, 0);
+            // //0x6CAD
+            // unsigned char scriptcode[2] = { 0x6C, 0xAD };
+            // cx_hash_no_throw(&btchip_context_D.transactionIdem.header, 0, scriptcode, 2, NULL, 0);
 
-            //locktime
-            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, btchip_context_D.lockTime, 4, NULL, 0);
+            // //Outputs
+            // unsigned char hashOutputs[32];
+            // memset(hashOutputs, 0, 32);
+            // cx_hash_no_throw(&btchip_context_D.hashOutputs.header, CX_LAST, NULL, 0, hashOutputs, 32);
+            // cx_hash_no_throw(&btchip_context_D.transactionIdem.header, 0, hashOutputs, 32, NULL, 0);
 
-            // 0x00
-            unsigned char hashtype = 0;
-            cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0, &hashtype, 1, NULL, 0);
+            // //locktime
+            // cx_hash_no_throw(&btchip_context_D.transactionIdem.header, 0, btchip_context_D.lockTime, 4, NULL, 0);
+            
+            // // 0x00
+            // unsigned char hashtype = 0;
+            // cx_hash_no_throw(&btchip_context_D.transactionIdem.header, 0, &hashtype, 1, NULL, 0);
+
+            // unsigned char idemBuffer[32];
+            // memcpy(idemBuffer, &btchip_context_D.transactionIdem.header, 32);
+            // // Hash again
+            // cx_hash_no_throw(&btchip_context_D.transactionIdem.header, CX_LAST, NULL, 0, idemBuffer, 32);
+            // cx_hash_no_throw(&btchip_context_D.transactionIdem.header, 0, hashOutputs, 32, NULL, 0);
+
 
         }
         }

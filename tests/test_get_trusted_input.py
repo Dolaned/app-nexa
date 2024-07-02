@@ -70,18 +70,13 @@ def test_get_trusted_inputs(cmd):
     raw_tx = bytes.fromhex('000100dd891f8389bc0ea3fe7b667a2bc12e61f460bb183e20d037329078346a524dd86422210267351b8db6c8b6dde86e348063d88a3c5c2d1ac0e453988c9720045749ff89a0407e5d76eeb01ee0d7e8f581f617ea53437913c05c681c3f215743b4afe1032e073a55247db4638d065e2d8ba058c16dd1d0d718b372c42fce1d2a2ca34a4ea6eefeffffffe80300000000000001012d0300000000000017005114a3fc83ff618b7f5a1ee270964d401a1416b00153a43e0600')
     tx = CTransaction()
     tx.deserialize(BytesIO(raw_tx))
-    print("\n")
-    print(tx.vin)
-    print("\n")
-    print(tx.vout)
-    print("\n")
     tx.rehash()
-    print(tx)
+
 
     trusted_input = cmd.get_trusted_input(utxo=tx)
 
-    _, _, _, prev_txid, amount, _ = deser_trusted_input(trusted_input)
+    _, _, _, prev_idem, amount, _, _ = deser_trusted_input(trusted_input)
 
-    assert prev_txid == tx.idem.to_bytes(32, byteorder="little")
+    assert prev_idem.hex() == tx.idem.hex()
 
 

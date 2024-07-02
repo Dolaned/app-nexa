@@ -63,7 +63,7 @@ unsigned short btchip_apdu_hash_input_start() {
     if ((G_io_apdu_buffer[ISO_OFFSET_P2] == P2_NEW) ||
         (G_io_apdu_buffer[ISO_OFFSET_P2] == P2_NEW_CASHADDR)) {
         if (G_io_apdu_buffer[ISO_OFFSET_P1] == P1_FIRST) {
-            unsigned char usingCashAddr = (G_io_apdu_buffer[ISO_OFFSET_P2] == P2_NEW_CASHADDR);
+            unsigned char usingCashAddr = true;
             // Request PIN validation
             // Only request PIN validation (user presence) to start a new
             // transaction signing flow.

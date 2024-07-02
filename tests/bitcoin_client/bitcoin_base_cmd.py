@@ -241,37 +241,41 @@ class BitcoinBaseCommand:
 
         # response = 0x32 (1) || 0x00 (1) || random (2) || prev_txid (32) ||
         #            || amount (8) || HMAC (8)
-            print("response Length "+str(len(response))+" \n", )
         assert len(response) == 56
 
         offset: int = 0
         magic_trusted_input: int = response[offset]
-        assert magic_trusted_input == 0x32
+        
         offset += 1
         zero: int = response[offset]
-        assert zero == 0x00
+        
         offset += 1
         _: bytes = response[offset:offset + 2]  # random
         offset += 2
-        prev_txid: bytes = response[offset:offset + 32]
+        prev_idem: bytes = response[offset:offset + 32]
         # TODO GET THIS WORKING
         utxo.rehash()
-        print(utxo.idem.hex())
-        print(utxo.hash)
-        print("\n")
-        print(prev_txid.hex()+ "\n")
-        assert prev_txid == hash256(utxo.serialize())
+        print("Sent utxo idem: "+ utxo.idem.hex()+" \n")
+
+        print("idem from ledger: " + prev_idem.hex()+ "\n")
+        
         offset += 32
         out_index: int = int.from_bytes(response[offset:offset + 4],
                                         byteorder="little")
-        assert out_index == 0
+        
         offset += 4
         amount: int = int.from_bytes(response[offset:offset + 8],
                                      byteorder="little")
-        assert amount == utxo.vout[output_index].nValue
+        
         offset += 8
         _: bytes = response[offset:offset + 8]  # HMAC
         offset += 8
+
+        assert magic_trusted_input == 0x32
+        assert zero == 0x00
+        assert utxo.idem.hex() == prev_idem.hex()
+        assert out_index == 0
+        assert amount == utxo.vout[0].nValue
 
         assert offset == len(response)
 
