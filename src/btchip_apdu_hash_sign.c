@@ -303,7 +303,7 @@ void btchip_bagl_user_action_signtx(unsigned char confirming, unsigned char dire
         PRINTF("Verify error: %u\n", verifyerr);
         PRINTF("ERROR:%d\n",error);
 
-        PRINTF("signed tx: %.*H\n", sizeof(outHash), outHash);
+        PRINTF("signed Preimage tx: %.*H\n", sizeof(outHash), outHash);
 
 
         // btchip_sign_schnorr_finalhash(
@@ -311,12 +311,10 @@ void btchip_bagl_user_action_signtx(unsigned char confirming, unsigned char dire
         //     sizeof(btchip_context_D.transactionSummary.keyPath),
         //     hash, sizeof(hash),
         //     G_io_apdu_buffer, &out_len);
-
-        PRINTF("Signed Preimage: %.*H\n", &out_len, G_io_apdu_buffer);
+        memcpy(G_io_apdu_buffer, outHash, sizeof(outHash));
         btchip_context_D.outLength = G_io_apdu_buffer[1] + 2;
         G_io_apdu_buffer[btchip_context_D.outLength++] = btchip_context_D.transactionSummary.sighashType;
         ui_transaction_finish();
-
     }
     else
     {
