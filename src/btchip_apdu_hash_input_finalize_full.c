@@ -47,17 +47,19 @@ static bool check_output_displayable() {
     unsigned char amount[8], isOpReturn, isP2sh, j, nullAmount = 1;
     unsigned char isOpCreate, isOpCall;
 
-    for (j = 0; j < 8; j++) {
+    for (j = 1; j < 9; j++) {
         if (btchip_context_D.currentOutput[j] != 0) {
             nullAmount = 0;
             break;
         }
     }
     if (!nullAmount) {
-        btchip_swap_bytes(amount, btchip_context_D.currentOutput, 8);
+        btchip_swap_bytes(amount, btchip_context_D.currentOutput + 1, 8);
         transaction_amount_add_be(btchip_context_D.totalOutputAmount,
                                   btchip_context_D.totalOutputAmount, amount);
+        PRINTF("--- null amount OUTPUT AMOUNT:\n%.*H\n", 8, btchip_context_D.totalOutputAmount);
     }
+    
     isOpReturn =
         btchip_output_script_is_op_return(btchip_context_D.currentOutput + 8);
     isP2sh = btchip_output_script_is_p2sh(btchip_context_D.currentOutput + 8);
@@ -89,6 +91,17 @@ bool handle_output_state() {
     uint32_t discardSize = 0;
     btchip_context_D.discardSize = 0;
     bool processed = false;
+    PRINTF("10th index=%u\n", btchip_context_D.currentOutput[9]);
+
+    PRINTF("Current Output:\n%.*H\n", 1 + 8 + btchip_context_D.currentOutput[9]+1, btchip_context_D.currentOutput);
+
+    PRINTF("--- ADD TO OUTPUTS:\n%.*H\n", 1 + 8 + btchip_context_D.currentOutput[9]+1, btchip_context_D.currentOutput);
+
+    cx_sha256_init_no_throw(&btchip_context_D.hashOutputs);
+
+    cx_hash_no_throw(&btchip_context_D.hashOutputs.header, 0,
+                btchip_context_D.currentOutput, 1 + 8 + btchip_context_D.currentOutput[9] + 1 , NULL, 0);
+
     switch (btchip_context_D.outputParsingState) {
     case BTCHIP_OUTPUT_PARSING_NUMBER_OUTPUTS: {
         btchip_context_D.totalOutputs = 0;
@@ -156,7 +169,10 @@ bool handle_output_state() {
 
         processed = true;
 
+        PRINTF("DISCARD SIZE: %u\n",  discardSize);
+        PRINTF("SCRIPT SIZE: %u\n",  scriptSize);
         discardSize += 8 + scriptSize;
+
 
         if (check_output_displayable()) {
             btchip_context_D.io_flags |= IO_ASYNCH_REPLY;
@@ -186,6 +202,7 @@ bool handle_output_state() {
 
 // out should be 33 bytes, even only 20 bytes is significant for output
 int get_pubkey_hash160(unsigned char* keyPath, size_t keyPath_len, unsigned char* out) {
+    PRINTF("We are getting a change key that we dont need \n");
     cx_ecfp_public_key_t public_key;
     int keyLength;
     if (btchip_get_public_key(keyPath, keyPath_len, public_key.W, NULL)) {
@@ -222,7 +239,7 @@ unsigned short btchip_apdu_hash_input_finalize_full_internal(
         return BTCHIP_SW_INCORRECT_P1_P2;
     }
 
-    PRINTF("p1: %x \n", p1);
+    PRINTF("p1 Finalise: %x \n", p1);
 
     // Check state
     btchip_set_check_internal_structure_integrity(0);
@@ -252,6 +269,7 @@ return_OK:
         memset(transactionSummary, 0,
                 sizeof(btchip_transaction_summary_t));
         if (G_io_apdu_buffer[ISO_OFFSET_CDATA] == 0x00) {
+            PRINTF("NO CHANGE INFO\n");
             // Called with no change path, abort, should be prevented on
             // the client side
             goto return_OK;
@@ -261,6 +279,7 @@ return_OK:
                 MAX_BIP32_PATH_LENGTH);
 
         if (get_pubkey_hash160(transactionSummary->keyPath, sizeof(transactionSummary->keyPath), btchip_context_D.tmpCtx.output.changeAddress)) {
+            PRINTF("GET PUBKEY ERROR \n");
             sw = SW_TECHNICAL_DETAILS(0x0F);
             goto discardTransaction;
         }
@@ -461,16 +480,19 @@ unsigned short btchip_apdu_hash_input_finalize_full() {
 
 unsigned char btchip_bagl_user_action(unsigned char confirming) {
     unsigned short sw = BTCHIP_SW_OK;
+    PRINTF("ARE WE IN HERE????\n");
 
     // confirm and finish the apdu exchange //spaghetti
 
     if (confirming) {
+        PRINTF("ARE WE CONFIRMING?\n");
         // Check if all inputs have been confirmed
 
         if (btchip_context_D.outputParsingState ==
             BTCHIP_OUTPUT_PARSING_OUTPUT) {
             btchip_context_D.remainingOutputs--;
         }
+        PRINTF("REMAINING OUTPUTS? %d\n", btchip_context_D.remainingOutputs);
 
         while (btchip_context_D.remainingOutputs != 0) {
             memmove(btchip_context_D.currentOutput,
@@ -486,15 +508,18 @@ unsigned char btchip_bagl_user_action(unsigned char confirming) {
                 ;
             if (btchip_context_D.io_flags & IO_ASYNCH_REPLY) {
                 if (!btchip_bagl_confirm_single_output()) {
+                    PRINTF("TRANSACTION IS FAILING SINGLE OUTPUT\n");
                     btchip_context_D.transactionContext.transactionState =
                         BTCHIP_TRANSACTION_NONE;
                     sw = BTCHIP_SW_INCORRECT_DATA;
                     break;
                 } else {
+                    PRINTF("UI IS DOING SOMETHING\n");
                     // Let the UI play
                     return 1;
                 }
             } else {
+                PRINTF("OUT OF DATA\n");
                 // Out of data to process, wait for the next call
                 break;
             }
@@ -509,6 +534,7 @@ unsigned char btchip_bagl_user_action(unsigned char confirming) {
                     BTCHIP_OUTPUT_PARSING_NONE;
                 btchip_context_D.transactionContext.transactionState =
                     BTCHIP_TRANSACTION_NONE;
+                    PRINTF("WE ARE RETURNING HERE\n");
                 sw = BTCHIP_SW_INCORRECT_DATA;
             } else {
                 // Let the UI play
@@ -518,7 +544,7 @@ unsigned char btchip_bagl_user_action(unsigned char confirming) {
 
         if (btchip_context_D.outputParsingState == BTCHIP_OUTPUT_FINALIZE_TX)
         {
-            PRINTF("sign ready change\n");
+            PRINTF("Transaction ready to sign\n");
             btchip_context_D.transactionContext.firstSigned = 0;
             btchip_context_D.transactionContext.transactionState = BTCHIP_TRANSACTION_SIGN_READY;
         }
@@ -526,6 +552,7 @@ unsigned char btchip_bagl_user_action(unsigned char confirming) {
     }
     else
     {
+        PRINTF("WE ARE NOT CONFIRMING, SOMETHING BROKE\n");
         // Discard transaction
         btchip_context_D.transactionContext.transactionState = BTCHIP_TRANSACTION_NONE;
         sw = BTCHIP_SW_CONDITIONS_OF_USE_NOT_SATISFIED;

@@ -130,8 +130,8 @@ int cashaddr_encode(uint8_t *hash, const size_t hash_length, uint8_t *addr,
     tmp[4] = 0x14;
     memmove(tmp + 5, hash, hash_length);
 
-    // PRINTF("tmp=\n%.*H\n", hash_length + 5 , tmp);
-
+    PRINTF("tmp=\n%.*H\n", hash_length + 5 , tmp);
+    PRINTF("\hash_length=%i \n", hash_length);
     convert_bits(payload, &payload_length, 5, tmp, hash_length + 5, 8, 1);
 
     PRINTF("\npayload\n");

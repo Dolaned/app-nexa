@@ -3,7 +3,7 @@ from typing import Tuple, List, Optional
 
 from ledgercomm import Transport
 
-from bitcoin_client.hwi.serialization import CTransaction, hash256
+from bitcoin_client.hwi.serialization import CTransaction, hash256, CTxIn
 from bitcoin_client.exception.device_exception import DeviceException
 from bitcoin_client.bitcoin_cmd_builder import AddrType, InsType, BitcoinCommandBuilder
 import base64
@@ -283,10 +283,7 @@ class BitcoinBaseCommand:
 
     def untrusted_hash_tx_input_start(self,
                                       tx: CTransaction,
-                                      inputs: List[Tuple[int, bytes, int]],
-                                      input_index: int,
-                                      script: bytes,
-                                      is_new_transaction: bool) -> None:
+                                      inputs: List[CTxIn]) -> None:
         """Send trusted inputs to build the new transaction.
 
         Parameters
@@ -294,14 +291,7 @@ class BitcoinBaseCommand:
         tx : CTransaction
             Serialized Bitcoin transaction to sign.
         inputs : List[Tuple[int, bytes, int]]
-            List of inputs with pair of UTXO and trusted input.
-        input_index : int
-            Index of the input to process.
-        script : bytes
-            The scriptSig to add at `input_index`.
-        is_new_transaction: bool
-            First time sending this input.
-
+            List of inputs with pair of UTXO
         Returns
         -------
         None
@@ -310,10 +300,7 @@ class BitcoinBaseCommand:
         sw: int
 
         for chunk in self.builder.untrusted_hash_tx_input_start(tx=tx,
-                                                                inputs=inputs,
-                                                                input_index=input_index,
-                                                                script=script,
-                                                                is_new_transaction=is_new_transaction):
+                                                                inputs=inputs):
             self.transport.send_raw(chunk)
             sw, _ = self.transport.recv()  # type: int, bytes
 

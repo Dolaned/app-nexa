@@ -24,8 +24,8 @@ btchip_convert_hex_amount_to_displayable_no_globals(unsigned char *amount, unsig
     unsigned char LOOP1;
     unsigned char LOOP2;
 
-    LOOP1 = 15;
-    LOOP2 = 6;
+    LOOP1 = 19;
+    LOOP2 = 2;
    
     unsigned short scratch[SCRATCH_SIZE];
     unsigned char offset = 0;

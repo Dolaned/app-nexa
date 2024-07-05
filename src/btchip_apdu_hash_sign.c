@@ -19,12 +19,13 @@
 #include "btchip_apdu_constants.h"
 #include "btchip_bagl_extensions.h"
 #include "btchip_display_variables.h"
+#include "lib_standard_app/crypto_helpers.h"
 #include "ui.h"
 
 #define SIGHASH_ALL 0x01
 
 unsigned short btchip_apdu_hash_sign() {
-    unsigned long int lockTime;
+    uint32_t lockTime;
     uint32_t sighashType;
     unsigned char dataBuffer[5];
     unsigned char authorizationLength;
@@ -64,8 +65,8 @@ unsigned short btchip_apdu_hash_sign() {
         sw = BTCHIP_SW_CONDITIONS_OF_USE_NOT_SATISFIED;
         goto discardTransaction;
     }
-
-    PRINTF("BUFFER OBJECT: %u \n", G_io_apdu_buffer[ISO_OFFSET_CDATA]);
+    PRINTF("BUFFER OBJECT =%.*H\n", 255, G_io_apdu_buffer);
+    PRINTF("BUFFER OBJECT: %u \n", G_io_apdu_buffer);
 
     // Read parameters
     if (G_io_apdu_buffer[ISO_OFFSET_CDATA] > MAX_BIP32_PATH)
@@ -86,6 +87,7 @@ unsigned short btchip_apdu_hash_sign() {
     parameters += 4;
     sighashType = *(parameters++);
     btchip_context_D.transactionSummary.sighashType = sighashType;
+    // btchip_context_D.lockTime = lockTime;
     PRINTF("Parameters: %u \n", parameters);
     PRINTF("Keypath: %u \n", btchip_context_D.transactionSummary.keyPath);
     PRINTF("authorization len: %u \n", authorizationLength);
@@ -102,14 +104,88 @@ unsigned short btchip_apdu_hash_sign() {
         
     }
 
-    // Finalize the hash
-    btchip_write_u32_le(dataBuffer, lockTime);
-    dataBuffer[4] = sighashType;
-    PRINTF("--- ADD TO HASH FULL:\n%.*H\n", sizeof(dataBuffer), dataBuffer);
-    if (cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0,
-            dataBuffer, sizeof(dataBuffer), NULL, 0)) {
-        goto discardTransaction;
-    }
+    // preimage = nVersion + bh2u(hashPrevouts) + bh2u(hashInputAmounts) + bh2u(hashSequence) + scriptCode + bh2u(hashOutputs) + nLocktime + '00'
+    int bufferSize = 137;
+    unsigned char buffer[137];
+    int bufferOffset = 0;
+    cx_sha256_init_no_throw(&btchip_context_D.transactionHashFull);
+
+    // version
+    memcpy(&buffer[bufferOffset], &btchip_context_D.transactionVersion, 1);
+    bufferOffset +=1;
+                
+    // prevouts
+    unsigned char prevoutHash[32];
+    memset(prevoutHash, 0, 32);
+    cx_hash_no_throw(&btchip_context_D.hashPrevouts.header, CX_LAST, NULL, 0, prevoutHash, 32);
+    cx_hash_sha256(prevoutHash, 32, prevoutHash, 32);
+
+    memcpy(&buffer[bufferOffset], prevoutHash, 32);
+    bufferOffset +=32;
+
+                
+    //input amounts
+    unsigned char hashInputAmounts[32];
+    memset(hashInputAmounts, 0, 32);
+    cx_hash_no_throw(&btchip_context_D.hashInputAmounts.header, CX_LAST, NULL, 0, hashInputAmounts, 32);
+    cx_hash_sha256(hashInputAmounts, 32, hashInputAmounts, 32);
+
+    memcpy(&buffer[bufferOffset], hashInputAmounts, 32);
+    bufferOffset +=32;
+
+    //sequence
+    unsigned char hashSequence[32];
+    memset(hashSequence, 0, 32);
+    cx_hash_no_throw(&btchip_context_D.hashSequence.header, CX_LAST, NULL, 0, hashSequence, 32);
+    cx_hash_sha256(hashSequence, 32, hashSequence, 32);
+
+    memcpy(&buffer[bufferOffset], hashSequence, 32);
+    bufferOffset +=32;
+
+    //Script code
+    unsigned char scriptcode[2] = { 0x6C, 0xAD };
+    unsigned char scriptCodeSize = 2;
+
+    memcpy(&buffer[bufferOffset], &scriptCodeSize, 1);
+    bufferOffset +=1;
+
+    memcpy(&buffer[bufferOffset], scriptcode, 2);
+    bufferOffset +=2;
+
+    //Outputs
+    unsigned char hashOutputs[32];
+    memset(hashOutputs, 0, 32);
+    cx_hash_no_throw(&btchip_context_D.hashOutputs.header, CX_LAST, NULL, 0, hashOutputs, 32);
+    cx_hash_sha256(hashOutputs, 32, hashOutputs, 32);
+
+    memcpy(&buffer[bufferOffset], hashOutputs, 32);
+    bufferOffset +=32;
+
+
+    //locktime
+    memcpy(&buffer[bufferOffset], &lockTime, 4);
+    bufferOffset +=4;
+                
+    // 0x00
+    unsigned char hashtype[1] = {0};
+    memcpy(&buffer[bufferOffset], hashtype, 1);
+    bufferOffset +=1;
+
+    PRINTF("PREIMAGE SERIALISATION= %.*H\n", bufferOffset, buffer);
+    PRINTF("PREVOUT Hash=%.*H\n", 32, prevoutHash);
+    PRINTF("HASH SEQUENCE Hash=%.*H\n", 32, hashSequence);
+    PRINTF("INPUTS Hash=%.*H\n", 32, hashInputAmounts);
+    PRINTF("HASH OUTPUTS Hash=%.*H\n", 32, hashOutputs);
+
+    PRINTF("--- ADD TO HASH FULL:\n%.*H\n", bufferSize, buffer);
+    unsigned char hash[32];
+    cx_hash_sha256(buffer, bufferSize, hash, 32);
+
+    PRINTF("PRE IMAGE Hash: %.*H\n", sizeof(hash), hash);
+
+    PRINTF("--- ADD TO HASH FULL:\n%.*H\n", 32, hash);
+        cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, 0,
+            hash, 32, NULL, 0);
 
     // Check if the path needs to be enforced
     if (!enforce_bip44_coin_type(btchip_context_D.transactionSummary.keyPath, false)) {
@@ -146,11 +222,45 @@ void btchip_bagl_user_action_signtx(unsigned char confirming, unsigned char dire
     // confirm and finish the apdu exchange //spaghetti
     if (confirming)
     {
+        bool error = false;
         unsigned char hash[32];
-        cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, CX_LAST, hash, 0, hash, 32);
-        PRINTF("Hash: %.*H\n", sizeof(hash), hash);
+
+        cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, CX_LAST, NULL, 0, hash, 32);
+        PRINTF("Double Hash: %.*H\n", sizeof(hash), hash);
+        // cx_ecfp_private_key_t private_key = {0};
+        // cx_ecfp_public_key_t pubkey_tweaked;  // Pubkey corresponding to the key used for signing
+
+
+        // if (bip32_derive_init_privkey_256(
+        //     CX_CURVE_256K1,
+        //     btchip_context_D.transactionSummary.keyPath,
+        //     sizeof(btchip_context_D.transactionSummary.keyPath),
+        //     &private_key,
+        //     NULL) != CX_OK) {
+        //     error = true;
+        // }
         
-        // Sign
+        // // Sign
+
+
+        // // generate corresponding public key
+        // unsigned int err =
+        //     cx_ecfp_generate_pair_no_throw(CX_CURVE_256K1, &pubkey_tweaked, &private_key, 1);
+        // if (err != CX_OK) {
+        //     error = true;
+        // }
+
+        // err = cx_ecschnorr_sign_no_throw(&private_key,
+        //     CX_RND_RFC6979,
+        //     CX_SHA256,
+        //     hash,
+        //     sizeof(hash),
+        //     G_io_apdu_buffer,
+        //     &out_len);
+        // if (err != CX_OK) {
+        //     error = true;
+        // }
+
         size_t out_len = sizeof(G_io_apdu_buffer);
         btchip_sign_schnorr_finalhash(
             btchip_context_D.transactionSummary.keyPath,
@@ -158,8 +268,10 @@ void btchip_bagl_user_action_signtx(unsigned char confirming, unsigned char dire
             hash, sizeof(hash),
             G_io_apdu_buffer, &out_len,
             ((N_btchip.bkp.config.options &
-                BTCHIP_OPTION_DETERMINISTIC_SIGNATURE) != 0));
+                BTCHIP_OPTION_DETERMINISTIC_SIGNATURE) != 0)
+                );
 
+        PRINTF("Signed Preimage: %.*H\n", &out_len, G_io_apdu_buffer);
         btchip_context_D.outLength = G_io_apdu_buffer[1] + 2;
         G_io_apdu_buffer[btchip_context_D.outLength++] = btchip_context_D.transactionSummary.sighashType;
         ui_transaction_finish();

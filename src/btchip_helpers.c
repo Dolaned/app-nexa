@@ -82,6 +82,19 @@ unsigned char btchip_output_script_is_p2sh(unsigned char *buffer)
     return 0;
 }
 
+unsigned char btchip_output_script_is_p2st(unsigned char *buffer)
+{
+    if ((memcmp(buffer, TRANSACTION_OUTPUT_SCRIPT_P2SH_PRE,
+        sizeof(TRANSACTION_OUTPUT_SCRIPT_P2SH_PRE)) == 0) &&
+        (memcmp(buffer + sizeof(TRANSACTION_OUTPUT_SCRIPT_P2SH_PRE) + 20,
+        TRANSACTION_OUTPUT_SCRIPT_P2SH_POST,
+        sizeof(TRANSACTION_OUTPUT_SCRIPT_P2SH_POST)) == 0))
+        {
+            return 1;
+        }
+    return 0;
+}
+
 unsigned char btchip_output_script_is_op_return(unsigned char *buffer)
 {
     return (buffer[1] == 0x6A);
@@ -449,7 +462,7 @@ int btchip_sign_schnorr_finalhash(unsigned char* path, size_t path_len, unsigned
             bip32Path.path,
             bip32Path.length,
             CX_ECSCHNORR_LIBSECP,
-            CX_SHA256,
+            CX_RND_RFC6979,
             in,
             inlen,
             out,

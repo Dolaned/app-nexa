@@ -134,6 +134,7 @@ unsigned short btchip_apdu_get_wallet_public_key() {
 btchip_public_key_hash160(buffer, // IN
                                 keyLength + 1,            // INLEN
                                 tmp);
+    PRINTF("GET HASH 160\n");
     for(int i = 0; i < 20; i++) {
         PRINTF("%02x", tmp[i]);
     }

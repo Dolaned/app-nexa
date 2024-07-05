@@ -4,7 +4,7 @@ from ledgercomm import Transport
 from bitcoin_client.hwi.cashaddr import decode as cash_addr_decode
 from bitcoin_client.hwi.cashaddr import encode as cash_addr_encode
 from bitcoin_client.hwi.serialization import (CTransaction, CTxIn, CTxOut, COutPoint,
-                                              is_p2pkh, hash160, is_p2st, sha256)
+                                              is_p2pkh, hash160, is_p2st, sha256, hash256)
 from bitcoin_client.hwi.bech32 import decode as bech32_decode
 from bitcoin_client.hwi.base58 import decode as base58_decode
 from bitcoin_client.utils import deser_trusted_input
@@ -65,6 +65,9 @@ class BitcoinCommand(BitcoinBaseCommand):
             Tuples (tx_hash_digest, sign_pub_key, (v, der_sig))
 
         """
+        print(amount)
+        print(fees)
+        to_amount = amount
         utxos: List[Tuple[CTransaction, int, int]] = []
         amount_available: int = 0
         for raw_tx, output_index in raw_utxos:
@@ -78,14 +81,14 @@ class BitcoinCommand(BitcoinBaseCommand):
             sign_pub_key, _, _ = self.get_public_key(
                 addr_type=AddrType.CASHADDR,
                 bip32_path=sign_path,
-                display=False
+                display=True
             )
             sign_pub_keys.append(compress_pub_key(sign_pub_key))
 
-        inputs: List[Tuple[CTransaction, bytes]] = [
-            (utxo, self.get_trusted_input(utxo=utxo))
-            for utxo, output_index, _ in utxos
-        ]
+        # inputs: List[Tuple[CTransaction, bytes]] = [
+        #     (utxo, None)
+        #     for utxo, output_index, _ in utxos
+        # ]
 
 
 
@@ -94,15 +97,17 @@ class BitcoinCommand(BitcoinBaseCommand):
         tx.nVersion = 0
         tx.nLockTime = lock_time
         # prepare vin
-        for i, (utxo, trusted_input) in enumerate(inputs):
-            if utxo.sha256 is None:
-                utxo.calcIdem()
+        for i, (transaction, output_index, amount) in enumerate(utxos):
+            print(transaction)
+            if transaction.sha256 is None:
+                transaction.rehash()
+                transaction.calcIdem()
 
-            _, _, _, prev_idem, output_index, _, _ = deser_trusted_input(trusted_input)
-            print('HO')
-            assert prev_idem == utxo.idem
-            print(trusted_input)
-            script_pub_key: bytes = utxo.vout[0].scriptPubKey
+            # _, _, _, prev_idem, output_index, _, _ = deser_trusted_input(trusted_input)
+            # print('HO')
+            # assert prev_idem == utxo.idem
+            # print(trusted_input)
+            script_pub_key: bytes = transaction.vout[0].scriptPubKey
             # P2ST or P2PKH
             if is_p2pkh(script_pub_key):
                 script_pub_key = (b"\x76" +  # OP_DUP
@@ -119,21 +124,22 @@ class BitcoinCommand(BitcoinBaseCommand):
                     b"\x14" +  # bytes to push (20)
                     hash160(sign_pub_keys[i]))  # hash160(pubkey)
 
-            tx.vin.append(CTxIn(outpoint=COutPoint(h=utxo.calcIdem()),
+            bytesArray = bytearray()
+            bytesArray += bytearray(transaction.calcIdem())
+            bytesArray += bytearray(output_index.to_bytes(4, 'little'))
+            shaResult = sha256(bytes(bytesArray))
+            print("SHA \n")
+            print(shaResult.hex())
+            tx.vin.append(CTxIn(outpoint=COutPoint(h=shaResult),
                                 scriptSig=script_pub_key,
-                                nSequence=0xfffffffd))
-            # bytesArray = bytearray()
-            # bytesArray += bytearray(utxo.calcIdem())
-            # bytesArray += bytearray(output_index.to_bytes(4, 'little'))
-            # shaResult = sha256(bytes(bytesArray))
-            # print(shaResult.hex())
-            # inputs.append({0, amount, shaResult})
-        if amount_available - fees > amount:
+                                nSequence=0xfffffffe, amount=amount))
+
+        if amount_available - fees > to_amount:
     
             change_pub_key, _, _ = self.get_public_key(
                 addr_type=AddrType.CASHADDR,
                 bip32_path=change_path,
-                display=False
+                display=True
             )
             change_pubkey_hash = hash160(compress_pub_key(change_pub_key))
             print(change_pub_key.hex())
@@ -143,7 +149,7 @@ class BitcoinCommand(BitcoinBaseCommand):
                 change_pubkey_hash)  # hash160(pubkey)
 
             tx.vout.append(
-                CTxOut(nValue=amount_available - fees - amount,
+                CTxOut(nValue=amount_available - fees - to_amount,
                        scriptPubKey=change_script_pubkey)
             )
         else:
@@ -158,45 +164,28 @@ class BitcoinCommand(BitcoinBaseCommand):
                               b"\x88" +  # OP_EQUALVERIFY
                               b"\xac")  # OP_CHECKSIG
         elif address.startswith("n"):
-            script_pub_key = cash_addr_decode(address)[2]
+            # this removes the serialize byte from the front
+            script_pub_key = cash_addr_decode(address)[2][1:]
+            print("in here") 
+            print(script_pub_key.hex())
+            print(address)
         else:
             raise Exception(f"Unsupported address: '{address}'")
 
-        tx.vout.append(CTxOut(nValue=amount,
+        tx.vout.append(CTxOut(nValue=to_amount,
                               scriptPubKey=script_pub_key))
-        print("inputs below \n")
-        print(inputs)
-        for i in range(len(tx.vin)):
-            print("vin loop")
-            # print(tx)
-            self.untrusted_hash_tx_input_start(tx=tx,
-                                               inputs=inputs,
-                                               input_index=i,
-                                               script=tx.vin[i].scriptSig,
-                                               is_new_transaction=(i == 0))
-        # print(tx)
+        print(tx)
         print("sign new tx")
+        self.untrusted_hash_tx_input_start(tx=tx, inputs=tx.vin)
 
         self.untrusted_hash_tx_input_finalize(tx=tx,
                                               change_path=change_path)
 
-        sigs: List[Tuple[bytes, bytes, Tuple[int, bytes]]] = []
+        sigs: List [Tuple[int, bytes]] = []
         for i in range(len(tx.vin)):
-            self.untrusted_hash_tx_input_start(tx=tx,
-                                               inputs=[inputs[i]],
-                                               input_index=0,
-                                               script=tx.vin[i].scriptSig,
-                                               is_new_transaction=False)
-            
-            _, _, amount = utxos[i]
-            print(utxos[i])
-            sigs.append(
-                (bip143_digest(tx, amount, i),
-                 sign_pub_keys[i],
-                 self.untrusted_hash_sign(sign_path=sign_paths[i],
+            self.untrusted_hash_sign(sign_path=sign_paths[i],
                                           lock_time=tx.nLockTime,
-                                          sig_hash=1))
-            )
+                                          sig_hash=1)
         return sigs
 
     def sign_tx(self,

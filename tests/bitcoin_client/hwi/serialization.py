@@ -294,9 +294,9 @@ class CTxIn(object):
             return r
 
     def __repr__(self) -> str:
-        return "CTxIn(prevout=%s scriptSig=%s nSequence=%i)" \
+        return "CTxIn(prevout=%s scriptSig=%s nSequence=%i amount=%i)" \
             % (repr(self.prevout), self.scriptSig.hex(),
-               self.nSequence)
+               self.nSequence, self.amount)
 
 
 def is_p2sh(script: bytes) -> bool:
