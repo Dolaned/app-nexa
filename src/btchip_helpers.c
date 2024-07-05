@@ -462,12 +462,16 @@ int btchip_sign_schnorr_finalhash(unsigned char* path, size_t path_len, unsigned
             bip32Path.path,
             bip32Path.length,
             CX_ECSCHNORR_LIBSECP,
-            CX_RND_RFC6979,
+            // CX_ECSCHNORR_BIP0340 | CX_RND_TRNG,
+            
+            //  CX_ECSCHNORR_BIP0340 | CX_RND_RFC6979,
+            CX_SHA256,
             in,
             inlen,
             out,
             outlen
         ) != CX_OK) {
+            PRINTF("RETURNING HERE\n");
         return -2;
     }
 
