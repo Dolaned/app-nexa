@@ -373,7 +373,8 @@ class BitcoinBaseCommand:
         sw, response = self.transport.exchange_raw(
             self.builder.untrusted_hash_sign(sign_path, lock_time, sig_hash)
         )  # type: int, bytes
-
+        print(sw)
+        print(response)
         if sw != 0x9000:
             raise DeviceException(error_code=sw, ins=InsType.UNTRUSTED_HASH_SIGN)
 

@@ -199,6 +199,7 @@ unsigned short btchip_apdu_hash_sign() {
     }
     sw = BTCHIP_SW_OK;
     if (btchip_context_D.called_from_swap) {
+        PRINTF("HERE4");
         // if we signed all outputs we should exit,
         // but only after sending response, so lets raise the
         // vars.swap_data.should_exit flag and check it on timer later
@@ -249,8 +250,8 @@ void btchip_bagl_user_action_signtx(unsigned char confirming, unsigned char dire
         }
         // 6975a43131fc91a6a7a6f263716f1c3b8d70519db44f52e57d6995e25dc9298a
         PRINTF("Private Key: %.*h\n", sizeof(private_key.d), private_key.d);
-        unsigned char outHash[72];
-        size_t outHashLen = 72;
+        unsigned char outHash[64];
+        size_t outHashLen = 64;
         // // Sign
         PRINTF("Create private key error:%d\n",error);
 
@@ -263,9 +264,6 @@ void btchip_bagl_user_action_signtx(unsigned char confirming, unsigned char dire
 
         // // Sign
         PRINTF("Create public key error:%d\n",error);
-
-        size_t out_len = sizeof(G_io_apdu_buffer);
-
 
         int Signerr = schnorr_sign_nexa(private_key.d,
                       hash,
@@ -283,15 +281,18 @@ void btchip_bagl_user_action_signtx(unsigned char confirming, unsigned char dire
     }
     else
     {
+        PRINTF("HERE1");
         sw = BTCHIP_SW_CONDITIONS_OF_USE_NOT_SATISFIED;
         btchip_context_D.outLength = 0;
     }
 
     if (!direct)
     {
+        PRINTF("HERE2");
         G_io_apdu_buffer[btchip_context_D.outLength++] = sw >> 8;
         G_io_apdu_buffer[btchip_context_D.outLength++] = sw;
 
         io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, btchip_context_D.outLength);
     }
+    PRINTF("HERE3");
 }
