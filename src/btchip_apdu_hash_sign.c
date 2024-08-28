@@ -21,7 +21,8 @@
 #include "btchip_display_variables.h"
 #include "lib_standard_app/crypto_helpers.h"
 #include "ui.h"
-
+#include "schnorr.h"
+#include "bip32_path.h"
 #define SIGHASH_ALL 0x01
 
 unsigned short btchip_apdu_hash_sign() {
@@ -88,8 +89,8 @@ unsigned short btchip_apdu_hash_sign() {
     sighashType = *(parameters++);
     btchip_context_D.transactionSummary.sighashType = sighashType;
     // btchip_context_D.lockTime = lockTime;
-    PRINTF("Parameters: %u \n", parameters);
-    PRINTF("Keypath: %u \n", btchip_context_D.transactionSummary.keyPath);
+    PRINTF("Parameters: %.*h\n",sizeof(parameters), parameters);
+    PRINTF("Keypath: %.*h\n",41, btchip_context_D.transactionSummary.keyPath);
     PRINTF("authorization len: %u \n", authorizationLength);
     PRINTF("locktime: %u \n", lockTime);
     PRINTF("sighashtype: %u \n", sighashType);
@@ -226,42 +227,32 @@ void btchip_bagl_user_action_signtx(unsigned char confirming, unsigned char dire
         unsigned char hash[32];
 
         cx_hash_no_throw(&btchip_context_D.transactionHashFull.header, CX_LAST, NULL, 0, hash, 32);
+        //8FFF121BE06CB45A91CE42A0A938A751A73C33C7A13D6114FEF33009D24189ED
         PRINTF("Double Hash: %.*H\n", sizeof(hash), hash);
-        cx_ecfp_private_key_t private_key = {0};
+        cx_ecfp_private_key_t private_key;
         cx_ecfp_public_key_t pubkey_tweaked;  // Pubkey corresponding to the key used for signing
 
+        bip32_path_t bip32Path;
+        bip32Path.length = btchip_context_D.transactionSummary.keyPath[0];
+
+        if (!parse_serialized_path(&bip32Path, btchip_context_D.transactionSummary.keyPath, sizeof(btchip_context_D.transactionSummary.keyPath))) {
+            // return -1;
+        }
 
         if (bip32_derive_init_privkey_256(
             CX_CURVE_256K1,
-            &btchip_context_D.transactionSummary.keyPath,
-            sizeof(btchip_context_D.transactionSummary.keyPath),
+            bip32Path.path, 
+            bip32Path.length,
             &private_key,
             NULL) != CX_OK) {
             error = true;
         }
-        PRINTF("MADE IT HERE\n");
+        // 6975a43131fc91a6a7a6f263716f1c3b8d70519db44f52e57d6995e25dc9298a
+        PRINTF("Private Key: %.*h\n", sizeof(private_key.d), private_key.d);
         unsigned char outHash[72];
         size_t outHashLen = 72;
         // // Sign
         PRINTF("Create private key error:%d\n",error);
-        size_t curve_size;
-        cx_ecdomain_parameters_length(private_key.curve, &curve_size);
-        PRINTF("CURVE SIZE: %u\n", curve_size);
-        bool range_res = CX_CURVE_RANGE(private_key.curve, WEIERSTRASS);
-        if (range_res == true) {
-            PRINTF("ITS TRUE\n");
-        } else{
-            PRINTF("ITS FALSE\n");
-        }
-        PRINTF("private_key dlen = %u \n", private_key.d_len);
-
-        bool sig_len_res = (outHashLen < (6 + 2 * (curve_size + 1)));
-
-        if (sig_len_res == true) {
-            PRINTF("ITS TRUE 2\n");
-        } else{
-            PRINTF("ITS FALSE 2\n");
-        }
 
         // // generate corresponding public key
         unsigned int err = 0;
@@ -275,42 +266,16 @@ void btchip_bagl_user_action_signtx(unsigned char confirming, unsigned char dire
 
         size_t out_len = sizeof(G_io_apdu_buffer);
 
-        int Signerr = cx_ecschnorr_sign_no_throw(
-            &private_key,
-            CX_ECSCHNORR_LIBSECP | CX_RND_PROVIDED,
-            CX_SHA256,
-            hash,
-            sizeof(hash),
-            outHash,
-            &outHashLen);
-        if (err != CX_OK) {
-            error = true;
-        }
 
-        int verifyerr = cx_ecschnorr_verify(
-            &pubkey_tweaked,
-            CX_ECSCHNORR_LIBSECP| CX_RND_PROVIDED,
-            CX_SHA256,
-            hash,
-            sizeof(hash),
-            outHash,
-            &outHashLen);
-        if (err != CX_OK) {
-            PRINTF("VERIFY FAILED\n");
-            error = true;
-        }
+        int Signerr = schnorr_sign_nexa(private_key.d,
+                      hash,
+                      outHash);
+
         PRINTF("Sign error: %u\n", Signerr);
-        PRINTF("Verify error: %u\n", verifyerr);
-        PRINTF("ERROR:%d\n",error);
 
+        //beb1dc2c65bf002e496ff37e2aad82dd6c1d0f1c06196fb07a3afe4d1a7a9482c3bfee0e33836062e83029b5e70a80179744494c86a38d10cee4bd67adb8a171
         PRINTF("signed Preimage tx: %.*H\n", sizeof(outHash), outHash);
 
-
-        // btchip_sign_schnorr_finalhash(
-        //     &btchip_context_D.transactionSummary.keyPath,
-        //     sizeof(btchip_context_D.transactionSummary.keyPath),
-        //     hash, sizeof(hash),
-        //     G_io_apdu_buffer, &out_len);
         memcpy(G_io_apdu_buffer, outHash, sizeof(outHash));
         btchip_context_D.outLength = G_io_apdu_buffer[1] + 2;
         G_io_apdu_buffer[btchip_context_D.outLength++] = btchip_context_D.transactionSummary.sighashType;

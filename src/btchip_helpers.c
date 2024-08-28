@@ -443,46 +443,46 @@ int btchip_sign_finalhash(unsigned char* path, size_t path_len, unsigned char *i
     return 0;
 }
 
-int btchip_sign_schnorr_finalhash(unsigned char* path, size_t path_len, unsigned char *in, unsigned short inlen,
-                                 unsigned char *out, size_t* outlen) {
+// int btchip_sign_schnorr_finalhash(unsigned char* path, size_t path_len, unsigned char *in, unsigned short inlen,
+//                                  unsigned char *out, size_t* outlen) {
 
-    unsigned int info = 0;
+//     unsigned int info = 0;
 
-    io_seproxyhal_io_heartbeat();
+//     io_seproxyhal_io_heartbeat();
 
-    bip32_path_t bip32Path;
-    bip32Path.length = path[0];
+//     bip32_path_t bip32Path;
+//     bip32Path.length = path[0];
 
-    if (!parse_serialized_path(&bip32Path, path, path_len)) {
-        return -1;
-    }
+//     if (!parse_serialized_path(&bip32Path, path, path_len)) {
+//         return -1;
+//     }
 
-    if (bip32_derive_schnorr_sign_hash_256(
-            CX_CURVE_SECP256K1,
-            bip32Path.path,
-            bip32Path.length,
-            CX_ECSCHNORR_LIBSECP,
-            // CX_ECSCHNORR_BIP0340 | CX_RND_TRNG,
+//     if (bip32_derive_schnorr_sign_hash_256(
+//             CX_CURVE_SECP256K1,
+//             bip32Path.path,
+//             bip32Path.length,
+//             CX_ECSCHNORR_LIBSECP,
+//             // CX_ECSCHNORR_BIP0340 | CX_RND_TRNG,
             
-            //  CX_ECSCHNORR_BIP0340 | CX_RND_RFC6979,
-            CX_SHA256,
-            in,
-            inlen,
-            out,
-            outlen
-        ) != CX_OK) {
-            PRINTF("RETURNING HERE\n");
-        return -2;
-    }
+//             //  CX_ECSCHNORR_BIP0340 | CX_RND_RFC6979,
+//             CX_SHA256,
+//             in,
+//             inlen,
+//             out,
+//             outlen
+//         ) != CX_OK) {
+//             PRINTF("RETURNING HERE\n");
+//         return -2;
+//     }
 
-    // Store information about the parity of the 'y' coordinate
-    if (info & CX_ECCINFO_PARITY_ODD) {
-        out[0] |= 0x01;
-    }
+//     // Store information about the parity of the 'y' coordinate
+//     if (info & CX_ECCINFO_PARITY_ODD) {
+//         out[0] |= 0x01;
+//     }
 
-    io_seproxyhal_io_heartbeat();
-    return 0;
-}
+//     io_seproxyhal_io_heartbeat();
+//     return 0;
+// }
 
 int btchip_get_public_key(unsigned char* keyPath, size_t keyPath_len, uint8_t raw_pubkey[static 65], unsigned char* chainCode) {
 
