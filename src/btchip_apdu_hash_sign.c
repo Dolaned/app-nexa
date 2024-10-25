@@ -61,7 +61,7 @@ unsigned short btchip_apdu_hash_sign() {
 
     if (btchip_context_D.transactionContext.transactionState != BTCHIP_TRANSACTION_SIGN_READY)
     {
-        
+
         PRINTF("Invalid transaction state %d\n", btchip_context_D.transactionContext.transactionState);
         sw = BTCHIP_SW_CONDITIONS_OF_USE_NOT_SATISFIED;
         goto discardTransaction;
@@ -72,7 +72,6 @@ unsigned short btchip_apdu_hash_sign() {
     // Read parameters
     if (G_io_apdu_buffer[ISO_OFFSET_CDATA] > MAX_BIP32_PATH)
     {
-        PRINTF("BIP ISSUE \n");
         sw = BTCHIP_SW_INCORRECT_DATA;
         goto discardTransaction;
     }
@@ -89,20 +88,14 @@ unsigned short btchip_apdu_hash_sign() {
     sighashType = *(parameters++);
     btchip_context_D.transactionSummary.sighashType = sighashType;
     // btchip_context_D.lockTime = lockTime;
-    PRINTF("Parameters: %.*h\n",sizeof(parameters), parameters);
-    PRINTF("Keypath: %.*h\n",41, btchip_context_D.transactionSummary.keyPath);
-    PRINTF("authorization len: %u \n", authorizationLength);
-    PRINTF("locktime: %u \n", lockTime);
-    PRINTF("sighashtype: %u \n", sighashType);
 
     if (((N_btchip.bkp.config.options & BTCHIP_OPTION_FREE_SIGHASHTYPE) == 0)) {
 
         if (sighashType != SIGHASH_ALL) {
-            PRINTF("NOT SIGHASH ALL \n");
             sw = BTCHIP_SW_INCORRECT_DATA;
             goto discardTransaction;
         }
-        
+
     }
 
     // preimage = nVersion + bh2u(hashPrevouts) + bh2u(hashInputAmounts) + bh2u(hashSequence) + scriptCode + bh2u(hashOutputs) + nLocktime + '00'
@@ -114,7 +107,7 @@ unsigned short btchip_apdu_hash_sign() {
     // version
     memcpy(&buffer[bufferOffset], &btchip_context_D.transactionVersion, 1);
     bufferOffset +=1;
-                
+
     // prevouts
     unsigned char prevoutHash[32];
     memset(prevoutHash, 0, 32);
@@ -124,7 +117,7 @@ unsigned short btchip_apdu_hash_sign() {
     memcpy(&buffer[bufferOffset], prevoutHash, 32);
     bufferOffset +=32;
 
-                
+
     //input amounts
     unsigned char hashInputAmounts[32];
     memset(hashInputAmounts, 0, 32);
@@ -166,7 +159,7 @@ unsigned short btchip_apdu_hash_sign() {
     //locktime
     memcpy(&buffer[bufferOffset], &lockTime, 4);
     bufferOffset +=4;
-                
+
     // 0x00
     unsigned char hashtype[1] = {0};
     memcpy(&buffer[bufferOffset], hashtype, 1);
@@ -242,7 +235,7 @@ void btchip_bagl_user_action_signtx(unsigned char confirming, unsigned char dire
 
         if (bip32_derive_init_privkey_256(
             CX_CURVE_256K1,
-            bip32Path.path, 
+            bip32Path.path,
             bip32Path.length,
             &private_key,
             NULL) != CX_OK) {

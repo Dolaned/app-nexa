@@ -1,2 +1,4 @@
 bitcoin-bin
 bitcoin-testnet-bin
+.venv/*
+ledger/*

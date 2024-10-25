@@ -87,7 +87,6 @@ unsigned short btchip_apdu_sign_message_internal() {
             memset(&btchip_context_D.transactionSummary, 0,
                     sizeof(btchip_transaction_summary_t));
             if (G_io_apdu_buffer[offset] > MAX_BIP32_PATH) {
-                PRINTF("Invalid path\n");
                 sw = BTCHIP_SW_INCORRECT_DATA;
                 goto discard;
             }
@@ -112,7 +111,6 @@ unsigned short btchip_apdu_sign_message_internal() {
             }
             if (btchip_context_D.transactionSummary.messageLength ==
                     0) {
-                PRINTF("Null message length\n");
                 sw = BTCHIP_SW_INCORRECT_DATA;
                 goto discard;
             }
@@ -190,7 +188,6 @@ unsigned short btchip_apdu_sign_message_internal() {
         } else {
             if ((btchip_context_D.hashedMessageLength + apduLength) >
                     btchip_context_D.transactionSummary.messageLength) {
-                PRINTF("Invalid data length\n");
                 sw = BTCHIP_SW_INCORRECT_DATA;
                 goto discard;
             }
@@ -232,7 +229,7 @@ unsigned short btchip_apdu_sign_message_internal() {
     }
     return sw;
 
-    discard : 
+    discard :
         memset(&btchip_context_D.transactionSummary, 0,
                   sizeof(btchip_transaction_summary_t));
         return sw;
@@ -258,7 +255,7 @@ unsigned short btchip_compute_hash() {
                 0, hash, 32)) {
         goto discard;
     }
-            
+
     if (cx_hash_sha256(hash, sizeof(hash), hash, 32) == 0) {
         goto discard;
     }
@@ -276,16 +273,16 @@ unsigned short btchip_compute_hash() {
         G_io_apdu_buffer, &out_len,                        // OUT
         ((N_btchip.bkp.config.options &BTCHIP_OPTION_DETERMINISTIC_SIGNATURE) != 0)
     );
-    
+
     PRINTF("Sign finalhashResult: %d \n", result);
 
     btchip_context_D.outLength = G_io_apdu_buffer[1] + 2;
-    
+
     PRINTF("Outlength: %u \n", btchip_context_D.outLength);
     memset(&btchip_context_D.transactionSummary, 0, sizeof(btchip_transaction_summary_t));
     return sw;
 
-    discard: 
+    discard:
             sw = SW_TECHNICAL_DETAILS(0x0F);
             return sw;
 }

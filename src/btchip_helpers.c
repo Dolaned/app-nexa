@@ -296,7 +296,6 @@ unsigned char bip44_derivation_guard(unsigned char *bip32Path, bool is_change_pa
        bip32PathInt.path[BIP44_ADDRESS_INDEX_OFFSET] > MAX_BIP44_ADDRESS_INDEX_RECOMMENDED) {
         return 1;
     }
-    PRINTF("in guard");
 
     return 0;
 }
@@ -405,7 +404,7 @@ int btchip_sign_finalhash(unsigned char* path, size_t path_len, unsigned char *i
     unsigned int info = 0;
 
     io_seproxyhal_io_heartbeat();
-    
+
     bip32_path_t bip32Path;
     bip32Path.length = path[0];
 
@@ -414,13 +413,13 @@ int btchip_sign_finalhash(unsigned char* path, size_t path_len, unsigned char *i
     }
     if (bip32_derive_ecdsa_sign_hash_256(
             CX_CURVE_SECP256K1,
-            bip32Path.path, 
+            bip32Path.path,
             bip32Path.length,
-            CX_LAST | (rfc6979 ? CX_RND_RFC6979 : CX_RND_TRNG), 
+            CX_LAST | (rfc6979 ? CX_RND_RFC6979 : CX_RND_TRNG),
             CX_SHA256,
-            in, 
-            inlen, 
-            out, 
+            in,
+            inlen,
+            out,
             outlen,
             &info) != CX_OK) {
         return -1;
@@ -463,7 +462,7 @@ int btchip_sign_finalhash(unsigned char* path, size_t path_len, unsigned char *i
 //             bip32Path.length,
 //             CX_ECSCHNORR_LIBSECP,
 //             // CX_ECSCHNORR_BIP0340 | CX_RND_TRNG,
-            
+
 //             //  CX_ECSCHNORR_BIP0340 | CX_RND_RFC6979,
 //             CX_SHA256,
 //             in,

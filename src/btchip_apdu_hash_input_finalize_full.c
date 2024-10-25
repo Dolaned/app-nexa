@@ -59,7 +59,7 @@ static bool check_output_displayable() {
                                   btchip_context_D.totalOutputAmount, amount);
         PRINTF("--- null amount OUTPUT AMOUNT:\n%.*H\n", 8, btchip_context_D.totalOutputAmount);
     }
-    
+
     isOpReturn =
         btchip_output_script_is_op_return(btchip_context_D.currentOutput + 8);
     isP2sh = btchip_output_script_is_p2sh(btchip_context_D.currentOutput + 8);
@@ -91,12 +91,6 @@ bool handle_output_state() {
     uint32_t discardSize = 0;
     btchip_context_D.discardSize = 0;
     bool processed = false;
-    PRINTF("10th index=%u\n", btchip_context_D.currentOutput[9]);
-
-    PRINTF("Current Output:\n%.*H\n", 1 + 8 + btchip_context_D.currentOutput[9]+1, btchip_context_D.currentOutput);
-
-    PRINTF("--- ADD TO OUTPUTS:\n%.*H\n", 1 + 8 + btchip_context_D.currentOutput[9]+1, btchip_context_D.currentOutput);
-
     cx_sha256_init_no_throw(&btchip_context_D.hashOutputs);
 
     cx_hash_no_throw(&btchip_context_D.hashOutputs.header, 0,
@@ -251,7 +245,7 @@ unsigned short btchip_apdu_hash_input_finalize_full_internal(
         goto discardTransaction;
     }
 
-    
+
 
     if (p1 == FINALIZE_P1_CHANGEINFO) {
         PRINTF("IN CHANGE INFO\n");
